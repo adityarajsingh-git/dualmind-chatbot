@@ -5,6 +5,7 @@ import Logo from './components/Logo';
 import type { ChatMode, Message } from './types';
 import { generateBotResponse } from './utils/responseEngine';
 import { parseResumeFile, buildResumeAnalysis } from './utils/resumeParser';
+import { saveTicket } from './utils/ticketApi';
 import {
   generateLLMResponse,
   isAIModeEnabled,
@@ -195,7 +196,7 @@ Status: Issue not fully resolved - requires additional support`;
         // Thank you message for recruitment
         const thankYouMessage = {
           id: makeId(),
-          content: "🎉 Thank you for visiting our Recruitment Assistant! We appreciate your interest in Acme Corp. Feel free to come back anytime when you're ready to explore career opportunities with us. Good luck with your job search!",
+          content: "🎉 Thank you for visiting our Recruitment Assistant! We appreciate your interest. Feel free to come back anytime when you're ready to explore career opportunities with us. Good luck with your job search!",
           sender: 'bot' as const,
           timestamp: new Date()
         };
@@ -242,12 +243,21 @@ Status: Issue not fully resolved - requires additional support`;
   const handleFeedbackSubmit = () => {
     // Close feedback popup
     setShowFeedbackPopup(false);
-    
+
     // Generate ticket and show popup
     const ticketId = generateTicketId();
     setGeneratedTicketId(ticketId);
     setShowTicketConfirmation(true);
-    
+
+    // Best-effort save to the optional MongoDB backend (no-op if not deployed)
+    const firstUserMessage = messages.find((m) => m.sender === 'user')?.content ?? '';
+    saveTicket({
+      ticketId,
+      mode: currentMode ?? 'employee-help',
+      feedback: feedbackText,
+      initialQuery: firstUserMessage
+    });
+
     const ticketMessage = {
       id: makeId(),
       content: ` Your support ticket has been created with reference ID: **${ticketId}**\n\nOur backend team will reach out to you shortly. You can also contact us directly using this reference number.`,
@@ -255,7 +265,7 @@ Status: Issue not fully resolved - requires additional support`;
       timestamp: new Date()
     };
     setMessages(prev => [...prev, ticketMessage]);
-    
+
     // Clear feedback text
     setFeedbackText('');
   };
@@ -313,7 +323,7 @@ Status: Issue not fully resolved - requires additional support`;
   const handleProceedApplication = () => {
     const confirmationMessage = {
       id: makeId(),
-      content: `✅ **Application Submitted Successfully!**\n\nYour profile has been forwarded to our backend team for review. Here's what happens next:\n\n• **Step 1**: HR team will review your application\n• **Step 2**: You'll receive an email confirmation\n• **Step 3**: Shortlisted candidates will be contacted\n• **Step 4**: Interview scheduling and process\n\n**Expected Timeline**: 3-5 business days\n\nThank you for considering Acme Corp as your next career opportunity. We look forward to connecting with you! 🚀`,
+      content: `✅ **Application Submitted Successfully!**\n\nYour profile has been forwarded to our backend team for review. Here's what happens next:\n\n• **Step 1**: HR team will review your application\n• **Step 2**: You'll receive an email confirmation\n• **Step 3**: Shortlisted candidates will be contacted\n• **Step 4**: Interview scheduling and process\n\n**Expected Timeline**: 3-5 business days\n\nThank you for considering us as your next career opportunity. We look forward to connecting with you! 🚀`,
       sender: 'bot' as const,
       timestamp: new Date()
     };

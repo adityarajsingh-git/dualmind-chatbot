@@ -36,21 +36,43 @@ With your own Claude API key, it upgrades to a **client-side RAG pipeline**:
 2. Claude answers **only from those excerpts** (with source citations), so it can't invent policies
 3. Any failure — no key, bad key, rate limit, network — silently falls back to the rule engine
 
-To enable it: open the chat → ⚙️ settings → paste your [Claude API key](https://platform.claude.com/) and pick a model. The key is stored **only in your browser's localStorage** and sent **only to the Claude API** — this repo has no backend and no key ever appears in the code or bundle.
+To enable it: open the chat → ⚙️ settings → choose a **provider** and paste your key.
+Two providers are supported:
+
+- **Google Gemini** — has a genuinely **free tier** ([get a key](https://aistudio.google.com/apikey)); best for a zero-cost setup.
+- **Claude (Anthropic)** — paid, ~₹0.20–₹1 per message ([get a key](https://platform.claude.com/)); new accounts get free trial credit.
+
+The key is stored **only in your browser's localStorage** and sent **only to the provider you chose** — no key ever appears in the code or bundle.
 
 ```
-User question ──▶ FAQ retrieval (top-5) ──▶ Claude API (grounded prompt) ──▶ answer + source
+User question ──▶ FAQ retrieval (top-5) ──▶ Gemini / Claude (grounded prompt) ──▶ answer + source
                         │                          │ (no key / any error)
                         └──────────────────────────▶ rule-based engine ──▶ answer
 ```
+
+## 🎫 Optional: save tickets to MongoDB
+
+When a user isn't satisfied and a support ticket is created, DualMind can save it to
+**MongoDB Atlas** via a tiny serverless function ([api/tickets.js](api/tickets.js)) — no
+Atlas credentials ever touch the browser or the repo. It's fully optional: with no
+database configured, tickets just show locally as before.
+
+To enable (all free-tier):
+
+1. Deploy this repo to **Vercel** (auto-detects Vite; the `api/` folder becomes serverless functions).
+2. In Atlas → Network Access, allow `0.0.0.0/0` (serverless IPs vary).
+3. In the Vercel project → Settings → Environment Variables, add
+   `MONGODB_URI` = your Atlas connection string (see [.env.example](.env.example)).
+4. Redeploy. Tickets now land in the `dualmind.tickets` collection.
 
 ## 🧰 Tech Stack
 
 - **React 19** + **TypeScript**
 - **Vite 7** for dev/build
 - **React Router 7**
-- **Anthropic SDK** (`@anthropic-ai/sdk`) for optional AI mode
-- Plain CSS with custom utility classes (no UI framework)
+- **Anthropic SDK** + **Gemini REST** for optional AI mode
+- **MongoDB Atlas** + a Vercel serverless function for optional ticket storage
+- Plain CSS design system (no UI framework)
 
 ## 🚀 Getting Started
 
@@ -65,24 +87,29 @@ npm run build      # production build
 ## 📁 Project Structure
 
 ```
+api/
+└── tickets.js                 # optional Vercel serverless fn → MongoDB Atlas
 src/
 ├── App.tsx                    # main app: chat UI, modes, modals
 ├── components/
-│   └── LandingBackground.tsx  # landing hero
+│   ├── LandingBackground.tsx  # landing hero
+│   └── Logo.tsx               # inline SVG brand mark
 ├── utils/
 │   ├── responseEngine.ts      # scored FAQ retrieval + keyword intents (rule-based)
-│   ├── llmClient.ts           # optional AI mode: BYO-key Claude client + grounded prompt
-│   └── resumeParser.ts        # resume parsing, job matching, analysis output
+│   ├── llmClient.ts           # optional AI mode: Gemini/Claude client + grounded prompt
+│   ├── resumeParser.ts        # resume parsing, job matching, analysis output
+│   └── ticketApi.ts           # best-effort ticket save to the backend
 ├── data/mockData.ts           # job catalog + generic FAQ knowledge base
 ├── types/index.ts             # shared TypeScript types
-└── assets/                    # logo & backgrounds
+└── assets/                    # backgrounds
 ```
 
 ## 🗺️ Roadmap
 
-- ~~Wire responses to a real LLM API~~ ✅ done — BYO-key AI mode with grounded RAG
+- ~~Wire responses to a real LLM API~~ ✅ done — BYO-key AI mode (Gemini/Claude) with grounded RAG
+- ~~Persist support tickets~~ ✅ done — optional MongoDB Atlas via serverless function
 - Real PDF parsing for resumes (pdf.js) instead of simulated extraction
-- Persist chat history
+- Admin view to browse saved tickets
 - Split `App.tsx` into smaller components
 - Editable knowledge base (per-company policies) instead of a static file
 
