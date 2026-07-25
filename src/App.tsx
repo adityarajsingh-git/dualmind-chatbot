@@ -138,10 +138,13 @@ function App() {
         if (conversationEpoch.current !== epoch) return; // conversation was reset
         setIsBotTyping(false);
         let content = result.content ?? generateBotResponse(userInput, mode);
-        if (!result.content && result.error === 'auth') {
-          content += '\n\n⚠️ AI mode: your API key was rejected — check Settings. This answer came from the built-in knowledge base.';
-        } else if (!result.content) {
-          content += '\n\n💤 AI mode was unavailable — this answer came from the built-in knowledge base.';
+        if (!result.content) {
+          const why = result.detail ? ` — ${result.detail}` : '';
+          if (result.error === 'auth') {
+            content += `\n\n⚠️ AI mode: key rejected${why}. Check Settings. (Answer from built-in knowledge base.)`;
+          } else {
+            content += `\n\n💤 AI mode unavailable${why}. (Answer from built-in knowledge base.)`;
+          }
         }
         deliverBotResponse(content);
       });

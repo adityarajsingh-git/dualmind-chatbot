@@ -129,6 +129,7 @@ export interface LLMHistoryItem {
 export interface LLMResult {
   content: string | null;
   error?: 'auth' | 'rate_limit' | 'other';
+  detail?: string; // human-readable reason surfaced for debugging
 }
 
 // ---------------------------------------------------------------------------
@@ -156,11 +157,17 @@ async function callClaude(
       .map((b) => b.text)
       .join('\n')
       .trim();
-    return text ? { content: text } : { content: null, error: 'other' };
+    return text ? { content: text } : { content: null, error: 'other', detail: 'Claude returned no text' };
   } catch (error) {
-    if (error instanceof Anthropic.AuthenticationError) return { content: null, error: 'auth' };
-    if (error instanceof Anthropic.RateLimitError) return { content: null, error: 'rate_limit' };
-    return { content: null, error: 'other' };
+    if (error instanceof Anthropic.AuthenticationError) {
+      return { content: null, error: 'auth', detail: 'Claude: invalid API key' };
+    }
+    if (error instanceof Anthropic.RateLimitError) {
+      return { content: null, error: 'rate_limit', detail: 'Claude: rate limited' };
+    }
+    const detail = `Claude request failed: ${error instanceof Error ? error.message : 'unknown'}`;
+    console.warn('[DualMind AI]', detail);
+    return { content: null, error: 'other', detail };
   }
 }
 
@@ -190,29 +197,45 @@ async function callGemini(
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: system }] },
+          systemInstruction: { parts: [{ text: system }] },
           contents,
-          generationConfig: { maxOutputTokens: 1024, temperature: 0.4 }
+          generationConfig: { maxOutputTokens: 2048, temperature: 0.4 }
         })
       }
     );
 
     if (!res.ok) {
-      if (res.status === 400 || res.status === 401 || res.status === 403) {
-        return { content: null, error: 'auth' };
-      }
-      if (res.status === 429) return { content: null, error: 'rate_limit' };
-      return { content: null, error: 'other' };
+      let apiMsg = '';
+      try {
+        const err = await res.json();
+        apiMsg = err?.error?.message ?? '';
+      } catch { /* body not JSON */ }
+      const detail = `Gemini ${res.status}${apiMsg ? `: ${apiMsg}` : ''}`;
+      console.warn('[DualMind AI]', detail);
+      const error =
+        res.status === 429 ? 'rate_limit' : res.status >= 400 && res.status < 404 ? 'auth' : 'other';
+      return { content: null, error, detail };
     }
 
     const data = await res.json();
-    const text: string | undefined = data?.candidates?.[0]?.content?.parts
+    const candidate = data?.candidates?.[0];
+    const text: string | undefined = candidate?.content?.parts
       ?.map((p: { text?: string }) => p.text ?? '')
       .join('')
       .trim();
-    return text ? { content: text } : { content: null, error: 'other' };
-  } catch {
-    return { content: null, error: 'other' };
+
+    if (text) return { content: text };
+
+    // 200 but no usable text — surface why (safety block, token cap, etc.)
+    const reason =
+      candidate?.finishReason ?? data?.promptFeedback?.blockReason ?? 'empty response';
+    const detail = `Gemini returned no text (${reason})`;
+    console.warn('[DualMind AI]', detail, data);
+    return { content: null, error: 'other', detail };
+  } catch (e) {
+    const detail = `Gemini request failed: ${e instanceof Error ? e.message : 'network error'}`;
+    console.warn('[DualMind AI]', detail);
+    return { content: null, error: 'other', detail };
   }
 }
 
