@@ -3,7 +3,7 @@ import Logo from './Logo';
 const FEATURES = [
   { emoji: '💼', title: 'Recruitment', desc: 'Job openings, resume matching & guided applications.' },
   { emoji: '🏢', title: 'Employee Help Desk', desc: 'Leave, payroll, IT support, benefits & HR policies.' },
-  { emoji: '⚡', title: 'AI Mode', desc: 'Plug in your own Claude key for grounded, cited answers.' }
+  { emoji: '⚡', title: 'AI Mode', desc: 'Add a free Gemini or Claude key for grounded, cited answers.' }
 ];
 
 const LandingBackground = ({ onStartChat }: { onStartChat: () => void }) => {

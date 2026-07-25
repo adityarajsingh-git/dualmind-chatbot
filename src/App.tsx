@@ -13,7 +13,11 @@ import {
   clearApiKey,
   getModel,
   saveModel,
-  AVAILABLE_MODELS,
+  getProvider,
+  saveProvider,
+  providerMeta,
+  PROVIDERS,
+  type Provider,
   type LLMHistoryItem
 } from './utils/llmClient';
 import './App.css';
@@ -32,6 +36,7 @@ function App() {
   const [conversationSummary, setConversationSummary] = useState(''); // State for animated summary
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false); // State for summary animation
   const [showSettings, setShowSettings] = useState(false); // AI mode settings modal
+  const [providerInput, setProviderInput] = useState<Provider>(getProvider());
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [modelInput, setModelInput] = useState(getModel());
   const [aiEnabled, setAiEnabled] = useState(isAIModeEnabled());
@@ -276,22 +281,33 @@ Status: Issue not fully resolved - requires additional support`;
   };
 
   const openSettings = () => {
-    setApiKeyInput(getApiKey() ?? '');
-    setModelInput(getModel());
+    const p = getProvider();
+    setProviderInput(p);
+    setApiKeyInput(getApiKey(p) ?? '');
+    setModelInput(getModel(p));
     setShowSettings(true);
   };
 
+  // Switching provider in the dropdown loads that provider's own saved key + model
+  const handleProviderChange = (p: Provider) => {
+    setProviderInput(p);
+    setApiKeyInput(getApiKey(p) ?? '');
+    setModelInput(getModel(p));
+  };
+
   const handleSettingsSave = () => {
-    saveApiKey(apiKeyInput);
-    saveModel(modelInput);
+    saveProvider(providerInput);
+    saveApiKey(providerInput, apiKeyInput);
+    saveModel(providerInput, modelInput);
     setAiEnabled(isAIModeEnabled());
     setShowSettings(false);
   };
 
   const handleClearApiKey = () => {
-    clearApiKey();
+    saveProvider(providerInput);
+    clearApiKey(providerInput);
     setApiKeyInput('');
-    setAiEnabled(false);
+    setAiEnabled(isAIModeEnabled());
   };
 
   const handleProceedApplication = () => {
@@ -1293,9 +1309,9 @@ Status: Issue not fully resolved - requires additional support`;
                     </div>
 
                     <p style={{fontSize: '14px', color: '#6b7280', lineHeight: '1.5', margin: '0 0 16px'}}>
-                      Paste your own Claude API key to enable AI-powered answers grounded in the
-                      built-in knowledge base. Without a key, the assistant runs on the free
-                      rule-based engine.
+                      Add your own API key to enable AI-powered answers grounded in the built-in
+                      knowledge base. <strong>Google Gemini has a free tier</strong> — pick it for a
+                      zero-cost setup. Without a key, the assistant runs on the free rule-based engine.
                     </p>
 
                     <div style={{
@@ -1308,17 +1324,43 @@ Status: Issue not fully resolved - requires additional support`;
                       color: '#1e40af'
                     }}>
                       🔒 Your key is stored only in <strong>this browser</strong> (localStorage) and is
-                      sent only to the Claude API — never to any other server.
+                      sent only to the provider you choose — never to any other server.
                     </div>
 
                     <label style={{display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px'}}>
-                      Claude API key
+                      Provider
+                    </label>
+                    <select
+                      value={providerInput}
+                      onChange={(e) => handleProviderChange(e.target.value as Provider)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        outline: 'none',
+                        marginBottom: '16px',
+                        backgroundColor: 'white',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      {PROVIDERS.map((p) => (
+                        <option key={p.id} value={p.id}>{p.label}</option>
+                      ))}
+                    </select>
+
+                    <label style={{display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px'}}>
+                      <span>API key</span>
+                      <a href={providerMeta(providerInput).keyUrl} target="_blank" rel="noreferrer" style={{fontSize: '12px', color: '#4f46e5', fontWeight: 600, textDecoration: 'none'}}>
+                        Get a key ↗
+                      </a>
                     </label>
                     <input
                       type="password"
                       value={apiKeyInput}
                       onChange={(e) => setApiKeyInput(e.target.value)}
-                      placeholder="sk-ant-..."
+                      placeholder={providerMeta(providerInput).keyHint}
                       autoComplete="off"
                       style={{
                         width: '100%',
@@ -1350,7 +1392,7 @@ Status: Issue not fully resolved - requires additional support`;
                         boxSizing: 'border-box'
                       }}
                     >
-                      {AVAILABLE_MODELS.map((m) => (
+                      {providerMeta(providerInput).models.map((m) => (
                         <option key={m.id} value={m.id}>{m.label}</option>
                       ))}
                     </select>
