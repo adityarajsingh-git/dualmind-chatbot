@@ -548,6 +548,8 @@ Status: Issue not fully resolved - requires additional support`;
                           maxWidth: '82%',
                           fontSize: '14px',
                           lineHeight: 1.5,
+                          overflowWrap: 'break-word',
+                          wordBreak: 'break-word',
                           boxShadow: message.sender === 'user' ? '0 6px 16px -6px rgba(79,70,229,0.5)' : '0 4px 12px -6px rgba(15,23,42,0.12)',
                           border: message.sender === 'user' ? 'none' : '1px solid #eef2f6'
                         }}>
