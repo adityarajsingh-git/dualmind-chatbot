@@ -23,6 +23,22 @@ import {
 } from './utils/llmClient';
 import './App.css';
 
+// Quick-reply suggestions shown at the start of a conversation
+const SUGGESTIONS: Record<ChatMode, string[]> = {
+  recruitment: [
+    'What job openings do you have?',
+    'How do I apply?',
+    "What's the interview process?",
+    'Do you offer internships?'
+  ],
+  'employee-help': [
+    'How do I apply for sick leave?',
+    'When is salary credited?',
+    'How do I reset my password?',
+    'What does health insurance cover?'
+  ]
+};
+
 function App() {
   const [currentMode, setCurrentMode] = useState<ChatMode | null>(null); // Start with no mode selected
   const [messages, setMessages] = useState<Message[]>([]);
@@ -79,10 +95,11 @@ function App() {
     }
   }, [isChatbotOpen, currentMode]);
 
-  const handleSendMessage = () => {
-    if (!inputMessage.trim() || !currentMode) return;
+  const handleSendMessage = (textOverride?: string) => {
+    const text = (textOverride ?? inputMessage).trim();
+    if (!text || !currentMode) return;
     const mode = currentMode;
-    const userInput = inputMessage;
+    const userInput = text;
     const newMessage: Message = {
       id: makeId(),
       content: userInput,
@@ -644,6 +661,33 @@ Status: Issue not fully resolved - requires additional support`;
                         </div>
                       </div>
                     ))}
+
+                    {/* Quick-reply suggestion chips — only before the user's first message */}
+                    {currentMode && !isBotTyping && !messages.some((m) => m.sender === 'user') && (
+                      <div className="dm-msg" style={{display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px', paddingLeft: '2px'}}>
+                        {SUGGESTIONS[currentMode].map((q) => (
+                          <button
+                            key={q}
+                            className="dm-lift"
+                            onClick={() => handleSendMessage(q)}
+                            style={{
+                              padding: '8px 14px',
+                              backgroundColor: 'white',
+                              color: '#4f46e5',
+                              border: '1px solid #e0e7ff',
+                              borderRadius: '999px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              boxShadow: '0 2px 8px -4px rgba(79,70,229,0.25)'
+                            }}
+                          >
+                            {q}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
                     {isBotTyping && (
                       <div className="dm-msg" style={{display: 'flex', justifyContent: 'flex-start', marginBottom: '14px'}}>
                         <div style={{
@@ -762,7 +806,7 @@ Status: Issue not fully resolved - requires additional support`;
                         />
                         <button
                           className="dm-lift"
-                          onClick={handleSendMessage}
+                          onClick={() => handleSendMessage()}
                           disabled={!inputMessage.trim()}
                           aria-label="Send message"
                           style={{
