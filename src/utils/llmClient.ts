@@ -29,8 +29,13 @@ export const PROVIDERS: ProviderMeta[] = [
     keyHint: 'AIza…',
     keyUrl: 'https://aistudio.google.com/apikey',
     models: [
-      { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash — fast & free' },
-      { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash — free' }
+      // "…-latest" aliases always resolve to a currently-available model, so
+      // they avoid the "no longer available to new users" / quota-0 errors that
+      // hit pinned older versions on some accounts. Recommended default.
+      { id: 'gemini-flash-latest', label: 'Gemini Flash (latest) — recommended' },
+      { id: 'gemini-flash-lite-latest', label: 'Gemini Flash-Lite (latest) — highest free quota' },
+      { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+      { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' }
     ]
   },
   {
