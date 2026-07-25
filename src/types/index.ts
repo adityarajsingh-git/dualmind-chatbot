@@ -5,19 +5,8 @@ export interface Message {
   content: string;
   sender: 'user' | 'bot';
   timestamp: Date;
-  type?: 'text' | 'file' | 'suggestion';
-  metadata?: {
-    fileType?: string;
-    fileName?: string;
-    suggestions?: string[];
-  };
-}
-
-export interface User {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
+  isSatisfactionCheck?: boolean;
+  mode?: ChatMode;
 }
 
 export interface JobRole {
@@ -30,35 +19,10 @@ export interface JobRole {
   location: string;
 }
 
-export interface InsurancePlan {
-  id: string;
-  name: string;
-  type: 'health' | 'life' | 'motor' | 'travel';
-  premium: number;
-  coverage: number;
-  features: string[];
-  description: string;
-  company: string;
-}
-
-export interface ResumeData {
-  name: string;
-  email: string;
-  phone: string;
-  skills: string[];
-  experience: number;
-  education: string;
-  previousRoles: string[];
-}
-
-export interface Language {
-  code: string;
-  name: string;
-  flag: string;
-}
-
 export interface FAQ {
   question: string;
   answer: string;
   source?: string;
+  /** Extra terms that should match this FAQ but don't appear in the question text */
+  keywords?: string[];
 }

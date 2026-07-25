@@ -1,4 +1,4 @@
-import type { JobRole, Language, FAQ } from '../types';
+import type { JobRole, FAQ } from '../types';
 
 export const jobRoles: JobRole[] = [
   {
@@ -23,7 +23,7 @@ export const jobRoles: JobRole[] = [
     id: '3',
     title: 'Sales Executive',
     department: 'Sales',
-    requirements: ['Sales', 'Communication', 'CRM', 'Insurance Knowledge'],
+    requirements: ['Sales', 'Communication', 'CRM'],
     description: 'Drive sales growth and build customer relationships',
     experience: '1-3 years',
     location: 'Bangalore, Karnataka'
@@ -37,7 +37,6 @@ export const jobRoles: JobRole[] = [
     experience: '2-4 years',
     location: 'Pune, Maharashtra'
   },
-  // Add more job positions here
   {
     id: '5',
     title: 'Data Scientist',
@@ -94,582 +93,382 @@ export const jobRoles: JobRole[] = [
   }
 ];
 
-export const employeeHelpTopics = [
-  {
-    id: '1',
-    category: 'HR & Policies',
-    title: 'Leave Management',
-    description: 'Apply for leaves, check leave balance, understand leave policies',
-    commonIssues: ['Sick leave application', 'Annual leave balance', 'Maternity leave policy', 'Work from home requests']
-  },
-  {
-    id: '2',
-    category: 'IT Support',
-    title: 'Technical Issues',
-    description: 'Laptop problems, software access, network issues, password reset',
-    commonIssues: ['Laptop not working', 'VPN connection issues', 'Software installation', 'Email access problems']
-  },
-  {
-    id: '3',
-    category: 'Payroll & Benefits',
-    title: 'Salary & Benefits',
-    description: 'Salary queries, tax deductions, benefits enrollment, reimbursement',
-    commonIssues: ['Salary slip queries', 'Tax deduction questions', 'Health insurance claims', 'Travel reimbursement']
-  },
-  {
-    id: '4',
-    category: 'Workplace',
-    title: 'Office & Facilities',
-    description: 'Office access, parking, cafeteria, meeting rooms, office supplies',
-    commonIssues: ['Office access card issues', 'Parking space allocation', 'Meeting room booking', 'Office supplies request']
-  },
-  // Add more employee help topics here
-  {
-    id: '5',
-    category: 'Learning & Development',
-    title: 'Training & Growth',
-    description: 'Training programs, skill development, and career growth opportunities',
-    commonIssues: ['Training programs', 'Skill development', 'Certification courses', 'Career guidance', 'Mentorship']
-  },
-  {
-    id: '6',
-    category: 'Performance & Reviews',
-    title: 'Performance Management',
-    description: 'Performance reviews, goal setting, and feedback processes',
-    commonIssues: ['Performance review process', 'Goal setting', 'Feedback sessions', 'Performance improvement plans']
-  },
-  {
-    id: '7',
-    category: 'Compliance & Legal',
-    title: 'Legal & Compliance',
-    description: 'Company policies, legal requirements, and compliance matters',
-    commonIssues: ['Company policies', 'Legal requirements', 'Compliance training', 'Code of conduct']
-  }
-];
-
-export const languages: Language[] = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'hi', name: 'हिंदी', flag: '🇮🇳' }
-];
+// ---------------------------------------------------------------------------
+// Recruitment knowledge base — generic, works for any small/mid-size company
+// ---------------------------------------------------------------------------
 
 export const recruitmentFAQs: FAQ[] = [
   {
+    question: 'How do I apply for a job?',
+    answer: 'Applying is simple: 1) Upload your resume right here in the chat for instant analysis, 2) I\'ll match you against all open roles, 3) If there\'s a fit, click "Proceed with Application" and HR will contact you with next steps.',
+    keywords: ['apply', 'application', 'process', 'submit']
+  },
+  {
+    question: 'What job openings do you currently have?',
+    answer: 'We hire across Engineering, Product, Design, Sales, Marketing, Analytics, and Operations. The current catalog includes Software Engineers, Product Managers, Data Scientists/Analysts, UI/UX Designers, QA Engineers, Business Analysts, Sales Executives, and Operations Managers. Upload your resume and I\'ll tell you exactly which ones you qualify for!',
+    keywords: ['openings', 'jobs', 'positions', 'vacancies', 'hiring', 'roles', 'available']
+  },
+  {
     question: 'What are the eligibility criteria for software engineering roles?',
-    answer: 'For software engineering roles, we typically look for candidates with 2-4 years of experience in React, TypeScript, Node.js, and cloud platforms like AWS. A degree in Computer Science or related field is preferred.'
+    answer: 'For software engineering roles we typically look for 2–4 years of experience with React, TypeScript, Node.js, and cloud platforms like AWS. A Computer Science degree helps but strong practical experience matters most.',
+    keywords: ['eligibility', 'criteria', 'requirements', 'software', 'engineer', 'developer']
   },
   {
     question: 'What is the interview process like?',
-    answer: 'Our interview process includes: 1) Initial screening call, 2) Technical assessment, 3) Technical interview with coding, 4) System design discussion, 5) HR and culture fit interview.'
+    answer: 'Our interview process has 4 steps: 1) Initial screening call with HR, 2) Technical or functional assessment, 3) In-depth interview with the hiring team, 4) Culture-fit conversation and offer discussion. Most candidates finish all rounds within two weeks.',
+    keywords: ['interview', 'rounds', 'steps', 'stages']
+  },
+  {
+    question: 'How long does the hiring process take?',
+    answer: 'Typically 1–2 weeks from application to offer. You\'ll hear back on your application within 3–5 business days, and we try to keep no more than a few days between interview rounds.',
+    keywords: ['timeline', 'long', 'time', 'days', 'duration', 'response', 'hear back']
+  },
+  {
+    question: 'How do I check my application status?',
+    answer: 'After you apply you\'ll receive an email confirmation. If you haven\'t heard back within 5 business days, reply to that email or write to the recruiting team with your name and the role you applied for.',
+    keywords: ['status', 'update', 'follow', 'track', 'applied']
   },
   {
     question: 'Do you offer remote work options?',
-    answer: 'Yes, we offer flexible work arrangements including remote work, hybrid models, and flexible hours based on role requirements and team needs.'
+    answer: 'Yes! We offer flexible arrangements including hybrid and fully remote options depending on the role and team. Discuss specifics with the hiring manager during your interview.',
+    keywords: ['remote', 'wfh', 'home', 'hybrid', 'flexible', 'onsite']
   },
   {
     question: 'What benefits do you provide?',
-    answer: 'We offer comprehensive benefits including health insurance, life insurance, flexible PTO, learning & development budget, stock options, and wellness programs.'
+    answer: 'Our benefits include health insurance, flexible PTO, a learning & development budget, performance bonuses, and flexible/hybrid work arrangements. Details are shared with your offer.',
+    keywords: ['benefits', 'perks', 'insurance', 'bonus']
+  },
+  {
+    question: 'When are salary details discussed?',
+    answer: 'Compensation is discussed in the HR round once there\'s mutual interest. Our packages are competitive and based on role, experience, and location — base salary plus performance bonus and benefits.',
+    keywords: ['salary', 'compensation', 'pay', 'ctc', 'package', 'negotiate']
+  },
+  {
+    question: 'Can freshers apply?',
+    answer: 'Full-time roles require at least 1 year of professional experience. If you\'re a fresher, keep an eye out for our internship programs — they\'re the best route in, and interns regularly convert to full-time offers.',
+    keywords: ['fresher', 'freshers', 'graduate', 'entry', 'level', 'experience', 'zero']
+  },
+  {
+    question: 'Do you offer internships?',
+    answer: 'Yes, we run internship programs a few times a year across engineering, design, and business teams. Internships typically last 3–6 months and strong performers receive full-time offers.',
+    keywords: ['internship', 'intern', 'student', 'college', 'trainee']
+  },
+  {
+    question: 'Can I apply for multiple positions?',
+    answer: 'Yes, you can apply for up to two roles at a time. Better yet, upload your resume here and I\'ll automatically check you against every open position at once.',
+    keywords: ['multiple', 'two', 'several', 'positions', 'more than one']
+  },
+  {
+    question: 'Can I reapply after being rejected?',
+    answer: 'Absolutely — we encourage reapplying after 6 months. Use the time to build the skills highlighted in your feedback, and mention your previous application when you reapply.',
+    keywords: ['reapply', 'rejected', 'again', 'reapplication', 'second']
+  },
+  {
+    question: 'How does the employee referral process work?',
+    answer: 'If someone who works here referred you, mention their name in your application or ask them to submit your profile internally. Referred candidates get a guaranteed resume review and typically a faster response.',
+    keywords: ['referral', 'refer', 'referred', 'employee', 'friend']
+  },
+  {
+    question: 'What should I include in my resume?',
+    answer: 'Keep it to 1–2 pages. Clearly state your total experience and key skills (that\'s what our matching engine reads), lead with quantifiable achievements, and use action verbs. Tailor the top third of the resume to the role you want.',
+    keywords: ['resume', 'cv', 'include', 'tips', 'format', 'improve']
+  },
+  {
+    question: 'How should I prepare for the interview?',
+    answer: 'Research the company and product, prepare 2–3 STAR-method stories (Situation, Task, Action, Result), be ready to discuss your resume projects in depth, and bring thoughtful questions about the team and roadmap. For technical roles, brush up on fundamentals and practice explaining your thinking aloud.',
+    keywords: ['prepare', 'preparation', 'interview', 'tips', 'advice']
+  },
+  {
+    question: 'What is the company culture like?',
+    answer: 'We\'re a close-knit team that values ownership, direct communication, and learning. Being a smaller company means your work is visible and your ideas reach decision-makers fast — you won\'t be a cog in a machine.',
+    keywords: ['culture', 'environment', 'team', 'values', 'like to work']
+  },
+  {
+    question: 'Do you provide relocation assistance?',
+    answer: 'Relocation support is decided case by case depending on the role and level. If you\'d need to relocate, raise it in the HR round and we\'ll let you know what\'s possible.',
+    keywords: ['relocation', 'relocate', 'move', 'city', 'shift']
+  },
+  {
+    question: 'What is the notice period expectation for joining?',
+    answer: 'We understand most candidates have a 30–60 day notice period. Share your earliest joining date in the HR round; for urgent roles we may discuss a notice-period buyout.',
+    keywords: ['notice', 'joining', 'date', 'buyout', 'when can i join']
   }
 ];
 
-// Mock resume profiles for testing different scenarios (without names - extracted from resume)
-export const mockResumeProfiles = [
-  {
-    experience: 4,
-    skills: ["React", "JavaScript", "Node.js", "Python", "SQL", "AWS", "Docker", "Git"],
-    department: "Tech",
-    education: "B.Tech Computer Science",
-    location: "Gurgaon",
-    currentRole: "Software Engineer"
-  },
-  {
-    experience: 2,
-    skills: ["Python", "SQL", "Excel", "Tableau", "Financial Analysis"],
-    department: "Finance",
-    education: "MBA Finance",
-    location: "Mumbai",
-    currentRole: "Financial Analyst"
-  },
-  {
-    experience: 2.5,
-    skills: ["Communication", "Sales", "CRM", "Customer Service"],
-    department: "Sales",
-    education: "BBA Marketing",
-    location: "Delhi",
-    currentRole: "Sales Representative"
-  },
-  {
-    experience: 3,
-    skills: ["HR Management", "Recruitment", "Employee Relations", "Payroll"],
-    department: "HR",
-    education: "Masters in HR",
-    location: "Bangalore",
-    currentRole: "HR Executive"
-  },
-  {
-    experience: 1.5,
-    skills: ["Basic Computer", "Communication", "Problem Solving"],
-    department: "Support",
-    education: "B.Com",
-    location: "Chennai",
-    currentRole: "Support Executive"
-  },
-  {
-    experience: 6,
-    skills: ["Java", "Spring Boot", "Microservices", "Kubernetes", "DevOps"],
-    department: "Tech",
-    education: "M.Tech Computer Science",
-    location: "Pune",
-    currentRole: "Senior Software Engineer"
-  },
-  {
-    experience: 1.5,
-    skills: ["Customer Service", "Communication", "Problem Solving", "CRM"],
-    department: "Support",
-    education: "B.A English",
-    location: "Hyderabad",
-    currentRole: "Customer Support Executive"
-  },
-  {
-    experience: 2.5,
-    skills: ["Digital Marketing", "Social Media", "Analytics", "SEO", "Content Creation"],
-    department: "Marketing",
-    education: "BBA Marketing",
-    location: "Mumbai",
-    currentRole: "Digital Marketing Executive"
-  },
-  {
-    experience: 5,
-    skills: ["Sales Management", "Leadership", "CRM", "Team Building", "Strategy"],
-    department: "Sales",
-    education: "MBA Sales & Marketing",
-    location: "Bangalore",
-    currentRole: "Sales Manager"
-  },
-  {
-    experience: 2.2,
-    skills: ["Communication", "Customer Service", "Patience", "Multitasking"],
-    department: "Call Centre",
-    education: "B.A",
-    location: "Gurgaon",
-    currentRole: "Call Centre Executive"
-  },
-  // Add more resume profiles here
-  {
-    experience: 7,
-    skills: ["Python", "Machine Learning", "TensorFlow", "Data Science", "Statistics", "SQL"],
-    department: "Tech",
-    education: "PhD Computer Science",
-    location: "Bangalore",
-    currentRole: "Senior Data Scientist"
-  },
-  {
-    experience: 2.8,
-    skills: ["Content Writing", "SEO", "Social Media", "Marketing", "Analytics"],
-    department: "Marketing",
-    education: "B.A Journalism",
-    location: "Mumbai",
-    currentRole: "Content Marketing Executive"
-  },
-  {
-    experience: 4.5,
-    skills: ["Project Management", "Agile", "Scrum", "Leadership", "Communication", "Risk Management"],
-    department: "Tech",
-    education: "MBA Project Management",
-    location: "Pune",
-    currentRole: "Project Manager"
-  },
-  {
-    experience: 2.8,
-    skills: ["UI/UX Design", "Figma", "Adobe Creative Suite", "User Research", "Prototyping"],
-    department: "Tech",
-    education: "B.Des Graphic Design",
-    location: "Delhi",
-    currentRole: "UI/UX Designer"
-  },
-  {
-    experience: 1.8,
-    skills: ["Basic Computer", "Communication", "Learning", "Adaptability"],
-    department: "Support",
-    education: "12th Pass",
-    location: "Chennai",
-    currentRole: "Junior Support Executive"
-  },
-  // Test cases for rejection (less than 1 year experience)
-  {
-    experience: 0.5,
-    skills: ["Basic Computer", "Communication"],
-    department: "Support",
-    education: "B.Com",
-    location: "Mumbai",
-    currentRole: "Intern"
-  },
-  {
-    experience: 0.8,
-    skills: ["Customer Service", "Communication"],
-    department: "Call Centre",
-    education: "12th Pass",
-    location: "Delhi",
-    currentRole: "Trainee"
-  },
-  {
-    experience: 0.3,
-    skills: ["Basic Skills"],
-    department: "Support",
-    education: "High School",
-    location: "Bangalore",
-    currentRole: "Fresher"
-  },
-  // Additional demo profiles for jury testing
-  {
-    experience: 0.6,
-    skills: ["Basic Computer", "Communication", "Learning"],
-    department: "Support",
-    education: "B.Com",
-    location: "Mumbai",
-    currentRole: "Intern"
-  },
-  {
-    experience: 1.5,
-    skills: ["React", "JavaScript", "HTML", "CSS", "Git"],
-    department: "Tech",
-    education: "B.Tech Computer Science",
-    location: "Delhi",
-    currentRole: "Frontend Developer"
-  },
-  {
-    experience: 3.5,
-    skills: ["Python", "Django", "PostgreSQL", "AWS", "Docker"],
-    department: "Tech",
-    education: "M.Tech Computer Science",
-    location: "Bangalore",
-    currentRole: "Backend Developer"
-  }
-];
+// ---------------------------------------------------------------------------
+// Employee help desk knowledge base — generic policies for a 30–100 person org
+// ---------------------------------------------------------------------------
 
 export const employeeHelpFAQs: FAQ[] = [
+  // --- Leave & attendance ---
   {
     question: 'How do I apply for sick leave?',
-    answer: 'You can apply for sick leave through the HR portal or by emailing your manager and HRBP. For sick leave of more than 3 days, you may need to submit a medical certificate. The leave will be deducted from your sick leave balance.'
-  },
-  {
-    question: 'How can I reset my password?',
-    answer: 'To reset your password: 1) Go to the IT portal, 2) Click "Forgot Password", 3) Enter your employee ID and registered email, 4) Follow the instructions sent to your email. If you face issues, contact IT support at it-support@acme.example.com.'
+    answer: 'Inform your manager as early as possible, then mark the sick leave in the HR portal. For sick leave longer than 2 consecutive days, attach a medical certificate.',
+    source: 'Leave Policy',
+    keywords: ['sick', 'ill', 'unwell', 'medical', 'fever']
   },
   {
     question: 'How do I check my leave balance?',
-    answer: 'You can check your leave balance by: 1) Logging into the HR portal, 2) Going to "My Profile" section, 3) Viewing "Leave Balance" tab. You can also contact HRBP for detailed leave information.'
-  },
-  {
-    question: 'How do I request office supplies?',
-    answer: 'To request office supplies: 1) Log into the facilities portal, 2) Go to "Supply Request" section, 3) Select the items you need, 4) Submit the request. Your manager will approve the request and supplies will be delivered to your desk.'
-  },
-  {
-    question: 'How do I book a meeting room?',
-    answer: 'To book a meeting room: 1) Open Outlook calendar, 2) Create a new meeting, 3) Click "Add Room" and select from available rooms, 4) Set your meeting time and duration. The room will be automatically booked if available.'
-  },
-  {
-    question: 'How do I claim travel reimbursement?',
-    answer: 'For travel reimbursement: 1) Keep all original bills and receipts, 2) Fill out the expense form on the HR portal, 3) Attach supporting documents, 4) Submit to your manager for approval. Reimbursement will be processed in the next payroll cycle.'
-  },
-  // Add more employee help FAQs here
-  {
-    question: 'How do I apply for training programs?',
-    answer: 'You can apply for training programs through the Learning & Development portal. Browse available courses, check eligibility, and submit your application. Your manager will review and approve based on business needs and your development goals.'
-  },
-  {
-    question: 'How do I schedule a performance review?',
-    answer: 'Performance reviews are scheduled quarterly. You will receive a calendar invite from HR. If you need to reschedule, contact your manager and HRBP at least 48 hours in advance. Prepare your self-assessment and goal updates beforehand.'
-  },
-  {
-    question: 'What is the company dress code policy?',
-    answer: 'We follow a business casual dress code. Smart casuals are acceptable for most roles. For client meetings or formal events, business formal attire is required. Check the employee handbook for detailed guidelines.'
-  },
-  {
-    question: 'How do I report a workplace issue?',
-    answer: 'You can report workplace issues through: 1) Your direct manager, 2) HRBP, 3) Anonymous reporting portal, 4) Ethics hotline. All reports are taken seriously and investigated confidentially.'
-  },
-  {
-    question: 'How do I update my emergency contact information?',
-    answer: 'Update your emergency contact information through the HR portal: 1) Log in to your employee account, 2) Go to "Personal Information", 3) Update emergency contacts, 4) Save changes. This information is crucial for your safety.'
-  },
-  // Additional comprehensive employee help FAQs
-  {
-    question: 'How do I download my salary slip?',
-    answer: 'Log in to PBhr.in > My Benefit & Pay > Compensation > Payslips to view and download your salary slips.'
-  },
-  {
-    question: 'When will I receive the statutory bonus?',
-    answer: 'Statutory bonus is processed during August–September each year for the previous financial year.'
-  },
-  {
-    question: 'How do I enrol in NPS?',
-    answer: 'Drop a mail to hr@acme.example.com with your employee ID and desired contribution percentage.'
-  },
-  {
-    question: 'How many leaves do I have left?',
-    answer: 'Check your leave balance on PBhr.in > Time & Attendance > Attendance & Leave > Leave Summary.'
-  },
-  {
-    question: 'I missed to punch in — what should I do?',
-    answer: 'Regularize via PBhr.in > Time & Attendance > Attendance > Request > Forgot to Punch.'
-  },
-  {
-    question: 'My tenure is coming to an end (Contractual). What happens?',
-    answer: 'Your HRBP will connect with you for next steps—should I notify them for you?'
-  },
-  {
-    question: 'How do I download Form 16?',
-    answer: 'Go to PBhr.in > HRMS > My Profile > View Details > Employee Lifecycle > Form 16.'
-  },
-  {
-    question: 'How do I change my education details in HRMS?',
-    answer: 'Please contact your HRBP for updating educational details.'
-  },
-  {
-    question: 'What will I receive in my Full & Final settlement?',
-    answer: 'F&F includes pending salary, leave encashment, and deductions, with a detailed breakup.'
-  },
-  {
-    question: 'I want to change my bank account. What should I do?',
-    answer: 'Email your HRBP with your employee ID, reason, and new bank details (with proof showing Name, Account No., and IFSC).'
-  },
-  {
-    question: 'When is my appraisal due?',
-    answer: 'Appraisals follow an Apr–Mar cycle; those who joined on or before Dec 31 are eligible for the same year.'
-  },
-  {
-    question: 'How do I set or update my goals for the year?',
-    answer: 'Go to PBhr.in > HRMS > Goals to set or update your goals.'
-  },
-  {
-    question: 'I cannot access PBhr.in portal — what should I do?',
-    answer: 'If your employee ID is active, please contact the IT team for login or network support.'
-  },
-  {
-    question: 'How do I regularize my attendance for past dates?',
-    answer: 'If the date falls outside the current attendance cycle (21st–20th), it can\'t be regularized—should I raise a ticket?'
-  },
-  {
-    question: 'How do I update my Aadhaar/PAN details?',
-    answer: 'Mail your HRBP with your employee ID and a masked copy of Aadhaar for the update.'
-  },
-  {
-    question: 'My name is misspelled in official documents — how do I correct it?',
-    answer: 'Email your HRBP with your employee ID, Aadhaar, and PAN for name correction.'
-  },
-  {
-    question: 'When will my ecode be generated?',
-    answer: 'Your ecode will be generated within 5–7 working days from your date of joining.'
-  },
-  // Comprehensive Policy FAQs
-  {
-    question: 'Who does the leave policy apply to?',
-    answer: 'It applies to all employees, including probationers, of PB Fintech Ltd. and its subsidiaries/group companies.',
-    source: 'Leave Policy'
+    answer: 'Log in to the HR portal and open the Leave Summary section — it shows your earned, casual, and sick leave balances in real time.',
+    source: 'Leave Policy',
+    keywords: ['balance', 'remaining', 'left', 'many leaves']
   },
   {
     question: 'What types of leave are available?',
-    answer: 'Employees are entitled to Earned Leave (EL), Sick Leave (SL), and Casual Leave (CL) as per state provisions.',
-    source: 'Leave Policy'
-  },
-  {
-    question: 'How is the leave year defined?',
-    answer: 'The leave year follows the company\'s calendar year, from 1st January to 31st December.',
-    source: 'Leave Policy'
+    answer: 'You get Earned Leave (for planned time off), Casual Leave (for short personal needs), and Sick Leave. Parental leave and bereavement leave are available separately.',
+    source: 'Leave Policy',
+    keywords: ['types', 'kinds', 'categories', 'earned', 'casual']
   },
   {
     question: 'Can I carry forward unused leaves?',
-    answer: 'Earned Leave can be carried forward up to state limits. Sick Leave and Casual Leave cannot be carried forward.',
-    source: 'Leave Policy'
-  },
-  {
-    question: 'Can I club Casual Leave and Sick Leave together?',
-    answer: 'Yes, CL and SL can be clubbed, but only with manager approval.',
-    source: 'Leave Policy'
+    answer: 'Earned Leave carries forward up to 30 days into the next calendar year. Casual and Sick Leave lapse at year end.',
+    source: 'Leave Policy',
+    keywords: ['carry', 'forward', 'unused', 'lapse', 'expire', 'next year']
   },
   {
     question: 'What if I take more leave than my balance?',
-    answer: 'Excess leave will be treated as Leave Without Pay (LWP) and deducted from your salary.',
-    source: 'Leave Policy'
-  },
-  {
-    question: 'What happens if I don\'t mark leave on the ESS portal?',
-    answer: 'Unmarked leave will be treated as absent, and your salary will be deducted for that period.',
-    source: 'Leave Policy'
+    answer: 'Leave beyond your available balance is treated as Leave Without Pay (LWP) and adjusted in that month\'s salary. Check your balance before applying to avoid surprises.',
+    source: 'Leave Policy',
+    keywords: ['more', 'exceed', 'negative', 'without pay', 'lwp', 'unpaid']
   },
   {
     question: 'How much notice is required before applying for leave?',
-    answer: 'At least 2 days in advance for short leaves. If leave exceeds 5 days, it must be planned 30 days in advance.',
-    source: 'Leave Policy'
+    answer: 'Apply at least 2 working days in advance for short leaves. For leaves longer than 5 days, plan and get approval at least 2 weeks ahead.',
+    source: 'Leave Policy',
+    keywords: ['notice', 'advance', 'before', 'planned']
   },
   {
     question: 'How many days of maternity leave are allowed?',
-    answer: '26 weeks for up to 2 children. If expecting after 2 children, the duration is 12 weeks.',
-    source: 'Leave Policy'
-  },
-  {
-    question: 'Is there leave available for miscarriage?',
-    answer: 'Yes, 6 weeks of paid leave is available after miscarriage or medical termination of pregnancy.',
-    source: 'Leave Policy'
-  },
-  {
-    question: 'Is adoption leave available?',
-    answer: 'Yes, female employees adopting a child can take up to 12 weeks of adoption leave.',
-    source: 'Leave Policy'
+    answer: 'Maternity leave is 26 weeks of paid leave, as per statutory requirements. Speak with HR early so cover and handover can be planned comfortably.',
+    source: 'Leave Policy',
+    keywords: ['maternity', 'pregnancy', 'pregnant', 'child']
   },
   {
     question: 'Is paternity leave available?',
-    answer: 'Yes, male employees are entitled to 7 days of paternity leave within 90 days of delivery or adoption.',
-    source: 'Leave Policy'
+    answer: 'Yes, 2 weeks of paid paternity leave, to be taken within 3 months of the child\'s birth or adoption.',
+    source: 'Leave Policy',
+    keywords: ['paternity', 'father', 'baby']
   },
   {
-    question: 'Can I take leave during my notice period?',
-    answer: 'Only pro-rata Sick Leave is allowed. Any other leave will be marked as absent and recovered from your notice pay.',
-    source: 'Leave Policy'
-  },
-  {
-    question: 'Can I encash unused leaves?',
-    answer: 'Unused Earned Leave will be encashed at the basic pay rate within 60 working days after resignation or termination.',
-    source: 'Leave Policy'
-  },
-  {
-    question: 'What holidays are provided?',
-    answer: 'All employees get public holidays as per the company calendar, including Republic Day, Independence Day, and Gandhi Jayanti.',
-    source: 'Leave Policy'
+    question: 'What are the company holidays?',
+    answer: 'The annual holiday calendar (10–12 public holidays plus any regional ones) is published on the HR portal at the start of each year.',
+    source: 'Leave Policy',
+    keywords: ['holidays', 'calendar', 'public', 'festival']
   },
   {
     question: 'What if I work on a public holiday?',
-    answer: 'You will get a compensatory off, which must be availed within 90 days, applicable up to Assistant Manager level.',
-    source: 'Leave Policy'
+    answer: 'You earn a compensatory off, which should be used within 60 days. Mark the comp-off request in the HR portal with your manager\'s approval.',
+    source: 'Leave Policy',
+    keywords: ['comp', 'compensatory', 'worked', 'weekend']
   },
   {
-    question: 'Who is eligible for local conveyance reimbursement?',
-    answer: 'All employees whose role demands local travel with specific approval from their Department Head.',
-    source: 'Local Conveyance Policy'
+    question: 'What is the work from home policy?',
+    answer: 'We follow a hybrid model — up to 2 WFH days per week with manager approval. Mark WFH days in the HR portal. Longer remote stretches need advance approval from your manager.',
+    source: 'Employee Handbook',
+    keywords: ['wfh', 'remote', 'home', 'hybrid']
   },
   {
-    question: 'Is home to office travel covered in local conveyance?',
-    answer: 'No, daily commute between office and home is not covered.',
-    source: 'Local Conveyance Policy'
+    question: 'Can I take leave during my notice period?',
+    answer: 'Only sick leave (with a medical certificate) is allowed during the notice period. Other leave taken will extend your notice period by the same number of days.',
+    source: 'Exit Policy',
+    keywords: ['notice period', 'leave during', 'resigned']
   },
   {
-    question: 'What is the reimbursement rate for fuel?',
-    answer: 'Rs. 12 per km for 4-wheelers and Rs. 6 per km for 2-wheelers, with a maximum of 4000 km per month.',
-    source: 'Local Conveyance Policy'
+    question: 'How do I regularize a missed punch or attendance?',
+    answer: 'Open the HR portal → Attendance → Regularization, pick the date, and submit the correction with a reason. Your manager approves it. Do this within the same attendance cycle.',
+    source: 'Employee Handbook',
+    keywords: ['punch', 'attendance', 'regularize', 'missed', 'forgot', 'biometric']
   },
   {
-    question: 'Is public transport reimbursement allowed?',
-    answer: 'Yes, up to Rs. 10,000 per month, with original bills submitted.',
-    source: 'Local Conveyance Policy'
+    question: 'What are the office timings?',
+    answer: 'Core hours are 10 AM to 5 PM, with flexible start between 8–10 AM. Full-time employees are expected to log about 8 working hours a day.',
+    source: 'Employee Handbook',
+    keywords: ['timings', 'hours', 'shift', 'core', 'flexible']
+  },
+
+  // --- Payroll & tax ---
+  {
+    question: 'When is salary credited?',
+    answer: 'Salary is credited on the last working day of every month. If it hasn\'t arrived by the next working day, contact HR/Finance.',
+    source: 'Payroll',
+    keywords: ['salary', 'credited', 'date', 'when', 'paid']
   },
   {
-    question: 'Can I claim parking and toll charges?',
-    answer: 'Yes, parking and toll expenses are reimbursable with original receipts.',
-    source: 'Local Conveyance Policy'
+    question: 'How do I download my salary slip?',
+    answer: 'Log in to the HR portal → Payroll → Payslips. Slips for every month are available to view and download as PDF.',
+    source: 'Payroll',
+    keywords: ['payslip', 'slip', 'download', 'salary slip']
   },
   {
-    question: 'How do I claim local conveyance reimbursement?',
-    answer: 'Submit claims via ESS with scanned bills, manager approval, and submit originals to Finance. Payment is processed within 15 days.',
-    source: 'Local Conveyance Policy'
+    question: 'How do I get my annual tax statement?',
+    answer: 'Your annual tax statement (e.g. Form 16) is published on the HR portal under Payroll → Tax Documents after the financial year closes, typically by mid-June.',
+    source: 'Payroll',
+    keywords: ['tax', 'form 16', 'statement', 'tds', 'documents']
   },
   {
-    question: 'Who does the relocation policy apply to?',
-    answer: 'All employees, including probationers, and new joiners offered relocation reimbursement.',
-    source: 'Relocation Policy'
+    question: 'How do I submit my tax-saving declarations?',
+    answer: 'Submit your investment declarations on the HR portal at the start of the financial year, and upload actual proofs by January. Missing the proof deadline means higher TDS in the final quarter.',
+    source: 'Payroll',
+    keywords: ['declaration', 'investment', 'proof', 'tax saving', '80c']
   },
   {
-    question: 'What expenses are covered under relocation?',
-    answer: 'One-way travel for employee, spouse, and up to 2 children, hotel stay for 7 days, and transportation of household goods including one vehicle.',
-    source: 'Relocation Policy'
+    question: 'I want to change my salary bank account. What should I do?',
+    answer: 'Email HR with your employee ID and a cancelled cheque or bank statement showing your name, account number, and IFSC. Changes made before the 20th apply to that month\'s payroll.',
+    source: 'Payroll',
+    keywords: ['bank', 'account', 'change', 'ifsc']
+  },
+
+  // --- IT support ---
+  {
+    question: 'How can I reset my password?',
+    answer: 'Use the "Forgot Password" self-service link on the login page — a reset link goes to your registered email. If you\'re locked out entirely, raise a ticket with IT support.',
+    source: 'IT Policy',
+    keywords: ['password', 'reset', 'forgot', 'locked', 'login']
   },
   {
-    question: 'Do I need quotations for shifting household goods?',
-    answer: 'Yes, you must submit at least 3 quotations. The best quotation is approved by the Functional Head.',
-    source: 'Relocation Policy'
+    question: 'My laptop is not working. What do I do?',
+    answer: 'Raise a ticket with the IT helpdesk describing the issue. For hardware failures, IT will arrange a repair or a loaner device so you\'re not blocked.',
+    source: 'IT Policy',
+    keywords: ['laptop', 'computer', 'broken', 'hardware', 'not working', 'slow']
   },
   {
-    question: 'What happens if I leave the company within one year after relocation?',
-    answer: 'All relocation expenses will be recovered from your Full & Final settlement.',
-    source: 'Relocation Policy'
+    question: 'How do I request new software or a license?',
+    answer: 'Raise an IT ticket with the software name and business reason, and loop in your manager for approval. Licensed tools are provisioned within 1–2 working days after approval.',
+    source: 'IT Policy',
+    keywords: ['software', 'license', 'install', 'tool', 'request']
   },
   {
-    question: 'Who is eligible under the travel policy?',
-    answer: 'All employees requiring travel for work with approval, and candidates traveling for interviews if reimbursement is offered.',
-    source: 'Travel Policy'
+    question: 'I cannot connect to the VPN. What should I check?',
+    answer: 'First restart the VPN client and check your internet connection. If it still fails, verify your credentials haven\'t expired, then raise an IT ticket with a screenshot of the error.',
+    source: 'IT Policy',
+    keywords: ['vpn', 'connect', 'network', 'access']
   },
   {
-    question: 'What travel modes are reimbursable?',
-    answer: 'Air tickets (economy class), train tickets as per grade, and road travel with approval.',
-    source: 'Travel Policy'
+    question: 'My email is not working. Who do I contact?',
+    answer: 'Check webmail first to rule out a client issue. If webmail also fails, raise an IT ticket — include when it stopped working and any error message you see.',
+    source: 'IT Policy',
+    keywords: ['email', 'outlook', 'gmail', 'mailbox']
+  },
+
+  // --- Expenses & travel ---
+  {
+    question: 'How do I claim expense reimbursement?',
+    answer: 'Submit the claim on the HR portal with scanned receipts within 30 days of the expense. After manager approval, reimbursement is paid with the next payroll cycle.',
+    source: 'Expense Policy',
+    keywords: ['reimbursement', 'expense', 'claim', 'receipts', 'money back']
   },
   {
-    question: 'What train travel classes are allowed?',
-    answer: 'Directors+: 1st AC, Managers-VP: 2nd AC, DM level and below: 3rd AC.',
-    source: 'Travel Policy'
+    question: 'What is the travel policy for work trips?',
+    answer: 'Book economy airfare or standard train fare, and stay within the per-night hotel caps set for your destination (shared in the Expense Policy). Meals on travel are reimbursed against actual bills up to the daily cap. Get manager approval before booking.',
+    source: 'Expense Policy',
+    keywords: ['travel', 'trip', 'flight', 'hotel', 'onsite', 'client visit']
   },
   {
-    question: 'What is the hotel entitlement?',
-    answer: 'Directors+: Actuals; Managers-VP: Rs. 8000 in metros, Rs. 5000 in non-metros; DM level: Rs. 5000 in metros, Rs. 3000 in non-metros.',
-    source: 'Travel Policy'
+    question: 'Can I claim fuel or cab charges for local travel?',
+    answer: 'Yes — local travel for work (client visits, offsite meetings) is reimbursable with receipts or per-km rates for personal vehicles. The daily office commute is not covered.',
+    source: 'Expense Policy',
+    keywords: ['fuel', 'cab', 'taxi', 'local', 'conveyance', 'petrol', 'commute']
+  },
+
+  // --- Benefits ---
+  {
+    question: 'What does the health insurance cover?',
+    answer: 'The group health policy covers you and can be extended to your spouse, children, and parents. It covers hospitalization, day-care procedures, and pre/post hospitalization expenses. Policy documents are on the HR portal.',
+    source: 'Benefits',
+    keywords: ['insurance', 'health', 'medical', 'cover', 'hospital', 'mediclaim']
   },
   {
-    question: 'What is the daily meal reimbursement limit?',
-    answer: 'Up to Rs. 2000 per day on actuals.',
-    source: 'Travel Policy'
+    question: 'How do I add dependents to my insurance?',
+    answer: 'Email HR with your dependent\'s details within 30 days of joining, marriage, or a child\'s birth. Outside those windows, additions happen at the annual policy renewal.',
+    source: 'Benefits',
+    keywords: ['dependent', 'spouse', 'parents', 'add', 'family', 'insurance']
   },
   {
-    question: 'Is per diem allowance provided?',
-    answer: 'No, per diem is not paid for office travel.',
-    source: 'Travel Policy'
+    question: 'Is there a referral bonus?',
+    answer: 'Yes! Refer a candidate by sending their resume to HR. If they\'re hired and complete 90 days, you receive the referral bonus with that month\'s payroll.',
+    source: 'Benefits',
+    keywords: ['referral', 'bonus', 'refer', 'friend']
   },
   {
-    question: 'How to claim travel reimbursement?',
-    answer: 'Submit reimbursement form with original bills, boarding pass, and approvals to Finance within 30 days. Payment is made within 15 days.',
-    source: 'Travel Policy'
+    question: 'Is there a learning or training budget?',
+    answer: 'Every employee has an annual learning budget for courses, books, and certifications relevant to their role. Get manager approval first, then claim it like a regular reimbursement.',
+    source: 'Benefits',
+    keywords: ['learning', 'training', 'course', 'certification', 'budget', 'upskill']
+  },
+
+  // --- HR requests & workplace ---
+  {
+    question: 'How do I update my personal details?',
+    answer: 'Update address, phone, and emergency contacts yourself on the HR portal under My Profile. Changes to legal name, PAN, or other ID-linked details go through HR with supporting documents.',
+    source: 'Employee Handbook',
+    keywords: ['update', 'address', 'phone', 'personal', 'details', 'emergency contact']
   },
   {
-    question: 'Who is eligible for education fee reimbursement?',
-    answer: 'Full-time employees with at least one year of service.',
-    source: 'Work Integrated Education Policy'
+    question: 'My name is misspelled in official documents. How do I correct it?',
+    answer: 'Email HR with your employee ID and a government ID showing the correct spelling. HR will correct it across payroll, insurance, and your records.',
+    source: 'Employee Handbook',
+    keywords: ['name', 'misspelled', 'correction', 'wrong', 'spelling']
   },
   {
-    question: 'What types of courses are eligible?',
-    answer: 'Work-integrated, higher education, or accredited certification courses relevant to current or future work.',
-    source: 'Work Integrated Education Policy'
+    question: 'How do I get an employment or experience letter?',
+    answer: 'Request it by email to HR with the purpose (visa, loan, address proof, etc.). Standard letters are issued within 3 working days.',
+    source: 'Employee Handbook',
+    keywords: ['letter', 'employment', 'experience', 'proof', 'certificate', 'visa', 'loan']
   },
   {
-    question: 'How many programs can I enroll in at a time?',
-    answer: 'Only one program at a time is allowed.',
-    source: 'Work Integrated Education Policy'
+    question: 'How do I report a workplace issue or harassment?',
+    answer: 'You can report through your manager, directly to HR, or via the anonymous reporting channel. Harassment complaints go to the internal committee. Every report is handled confidentially and without retaliation.',
+    source: 'Employee Handbook',
+    keywords: ['harassment', 'complaint', 'report', 'issue', 'grievance', 'posh', 'bully']
   },
   {
-    question: 'What is the reimbursement limit for education?',
-    answer: 'For courses ≤6 months: Rs. 50,000 or 75%. For >6 months: Rs. 1,00,000 p.a. or 75%. Books up to 10% of tuition fee.',
-    source: 'Work Integrated Education Policy'
+    question: 'How does the performance review cycle work?',
+    answer: 'Reviews happen twice a year — a mid-year check-in and a year-end appraisal that feeds into increments and promotions. You\'ll submit a self-assessment, then have a review conversation with your manager.',
+    source: 'Employee Handbook',
+    keywords: ['performance', 'review', 'appraisal', 'increment', 'promotion', 'rating']
   },
   {
-    question: 'When is education reimbursement paid?',
-    answer: 'After successful completion, upon submission of original mark sheets and proof of fees paid.',
-    source: 'Work Integrated Education Policy'
+    question: 'How do I set or update my goals for the year?',
+    answer: 'Set your goals on the HR portal under Goals at the start of the cycle, aligned with your manager. You can update them mid-year during the check-in.',
+    source: 'Employee Handbook',
+    keywords: ['goals', 'okr', 'objectives', 'set', 'kpi']
   },
   {
-    question: 'What are the minimum passing criteria for education reimbursement?',
-    answer: 'At least 50% marks, or equivalent grade, must be secured.',
-    source: 'Work Integrated Education Policy'
+    question: 'What is the probation period?',
+    answer: 'New joiners are on probation for 3 months, with confirmation after a review with your manager. Benefits and leave accrual start from day one regardless.',
+    source: 'Employee Handbook',
+    keywords: ['probation', 'confirmation', 'new joiner']
   },
   {
-    question: 'What happens if I don\'t finish the course?',
-    answer: 'No reimbursement will be given if the course is not completed successfully.',
-    source: 'Work Integrated Education Policy'
+    question: 'How do I book a meeting room?',
+    answer: 'Book through the shared calendar — create a meeting, add the room as a resource, and it\'s reserved if free. For recurring bookings or events, check with the office manager.',
+    source: 'Employee Handbook',
+    keywords: ['meeting', 'room', 'book', 'conference']
   },
   {
-    question: 'What if I resign after receiving reimbursement?',
-    answer: 'You must serve 6 months after short courses and 1 year after longer courses, or the reimbursed fee will be recovered with 9% interest.',
-    source: 'Work Integrated Education Policy'
+    question: 'What is the dress code?',
+    answer: 'Casual is fine for regular days. Go business casual for client meetings and external events. Use good judgment — comfortable but presentable.',
+    source: 'Employee Handbook',
+    keywords: ['dress', 'code', 'wear', 'attire', 'clothes']
+  },
+
+  // --- Exit ---
+  {
+    question: 'How do I resign and what is the notice period?',
+    answer: 'Email your resignation to your manager and HR. The standard notice period is 30 days (60 for senior roles, as per your offer letter). HR will confirm your last working day and start the exit process.',
+    source: 'Exit Policy',
+    keywords: ['resign', 'resignation', 'quit', 'notice', 'leaving']
   },
   {
-    question: 'Are taxes applicable on reimbursement?',
-    answer: 'Yes, the reimbursed amount is taxable as per IT slab, and the employee bears the tax liability.',
-    source: 'Work Integrated Education Policy'
+    question: 'What will I receive in my Full & Final settlement?',
+    answer: 'F&F includes pending salary, encashment of unused earned leave, and any approved reimbursements, minus applicable deductions or recoveries. It\'s processed within 45 days of your last working day with a detailed breakup.',
+    source: 'Exit Policy',
+    keywords: ['full and final', 'fnf', 'settlement', 'dues']
+  },
+  {
+    question: 'Can I encash unused leaves?',
+    answer: 'Unused Earned Leave is encashed at your basic pay rate as part of the Full & Final settlement when you leave. There is no leave encashment while employed.',
+    source: 'Exit Policy',
+    keywords: ['encash', 'encashment', 'unused', 'leave']
   }
 ];

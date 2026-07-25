@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1"
@@ -28,7 +29,7 @@
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"
   },
-  "description": "DualMind \u2014 a dual-mode chatbot (Recruitment Assistant + Employee Help Desk) built with React, TypeScript and Vite",
+  "description": "DualMind — a dual-mode chatbot (Recruitment Assistant + Employee Help Desk) built with React, TypeScript and Vite",
   "author": "Adityaraj Singh",
   "license": "MIT"
 }

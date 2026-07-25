@@ -1,15 +1,26 @@
 import { useState, useRef, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingBackground from './components/LandingBackground';
-import type { ChatMode } from './types';
-import { jobRoles, employeeHelpFAQs, recruitmentFAQs } from './data/mockData';
+import Logo from './components/Logo';
+import type { ChatMode, Message } from './types';
+import { generateBotResponse } from './utils/responseEngine';
+import { parseResumeFile, buildResumeAnalysis } from './utils/resumeParser';
+import {
+  generateLLMResponse,
+  isAIModeEnabled,
+  getApiKey,
+  saveApiKey,
+  clearApiKey,
+  getModel,
+  saveModel,
+  AVAILABLE_MODELS,
+  type LLMHistoryItem
+} from './utils/llmClient';
 import './App.css';
-import Background from './assets/background.png';
-import Logo from './assets/logo.png';
 
 function App() {
   const [currentMode, setCurrentMode] = useState<ChatMode | null>(null); // Start with no mode selected
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [showResumeUpload, setShowResumeUpload] = useState(false);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
@@ -20,202 +31,128 @@ function App() {
   const [feedbackText, setFeedbackText] = useState(''); // State for feedback input
   const [conversationSummary, setConversationSummary] = useState(''); // State for animated summary
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false); // State for summary animation
+  const [showSettings, setShowSettings] = useState(false); // AI mode settings modal
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [modelInput, setModelInput] = useState(getModel());
+  const [aiEnabled, setAiEnabled] = useState(isAIModeEnabled());
+  const [isBotTyping, setIsBotTyping] = useState(false); // Typing indicator while AI mode responds
   const inputRef = useRef<HTMLInputElement>(null); // Ref for input field focus
+  const messagesEndRef = useRef<HTMLDivElement>(null); // Anchor for auto-scroll
+  const pendingTimeouts = useRef<number[]>([]);
+
+  // Every delayed action goes through schedule() so a mode switch or "New Chat"
+  // can cancel stale bot replies before they land in the wrong conversation
+  const schedule = (fn: () => void, ms: number) => {
+    const id = window.setTimeout(fn, ms);
+    pendingTimeouts.current.push(id);
+    return id;
+  };
+  // Epoch guards async work (LLM calls) the same way clearing timeouts guards
+  // delayed work: bump it on reset and stale promises drop their results
+  const conversationEpoch = useRef(0);
+  const clearPendingTimeouts = () => {
+    pendingTimeouts.current.forEach((id) => clearTimeout(id));
+    pendingTimeouts.current = [];
+    conversationEpoch.current += 1;
+  };
+  useEffect(() => clearPendingTimeouts, []);
+
+  const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  // Keep the newest message in view
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   // Auto-focus input when chatbot opens or mode is selected
   useEffect(() => {
     if (isChatbotOpen && currentMode && inputRef.current) {
       // Small delay to ensure the input is rendered
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
+      const id = window.setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(id);
     }
   }, [isChatbotOpen, currentMode]);
 
-  const generateBotResponse = (userMessage: string, mode: ChatMode): string => {
-    const message = userMessage.toLowerCase();
-    
-    if (mode === 'recruitment') {
-      // Search through recruitment FAQs first
-      for (const faq of recruitmentFAQs) {
-        const questionWords = faq.question.toLowerCase().split(' ');
-        const messageWords = message.split(' ');
-        
-        // Check if any significant words from the question match the user's message
-        const matchingWords = questionWords.filter(word => 
-          word.length > 3 && messageWords.some(msgWord => 
-            msgWord.includes(word) || word.includes(msgWord)
-          )
-        );
-        
-        if (matchingWords.length >= 2) {
-          return faq.source ? `${faq.answer}\n\n*Source: ${faq.source}*` : faq.answer;
-        }
-      }
-      
-      // Fallback to keyword-based responses with generic conversational responses
-      if (message.includes('apply') && (message.includes('job') || message.includes('position'))) {
-        return "Fantastic! I'm excited to help you apply for a position at Acme Corp! 🚀\n\nWe have amazing opportunities across various departments:\n\n• **Technology** - Software Engineers, Data Scientists, DevOps\n• **Product & Design** - Product Managers, UI/UX Designers\n• **Business** - Sales, Marketing, Business Development\n• **Operations** - HR, Finance, Customer Support\n\nTo get started, I'd love to learn more about your background! You can:\n📄 **Upload your resume** for instant AI analysis\n💬 **Tell me about your experience** and interests\n\nWhat would you prefer to do first?";
-      }
-      if (message.includes('job') || message.includes('opening') || message.includes('position') || message.includes('career')) {
-        return "Great! We have several exciting job openings at Acme Corp. We're currently hiring for:\n\n• Software Engineers (React, Node.js, Python)\n• Product Managers\n• Data Scientists\n• Marketing Specialists\n• Sales Representatives\n\nWould you like me to help you find a role that matches your skills?";
-      }
-      if (message.includes('apply') || message.includes('application')) {
-        return "Wonderful! I'm here to help you with your job application at Acme Corp! 🌟\n\nHere's how I can assist you:\n\n📋 **Application Process:**\n• Upload and analyze your resume\n• Match you with suitable roles\n• Provide interview preparation tips\n• Guide you through next steps\n\n📎 **Quick Start:** Use the 'Upload Resume' button below for instant analysis!\n\nWhat specific help do you need with your application?";
-      }
-      if (message.includes('resume') || message.includes('cv')) {
-        return "I can help you with resume optimization! For the best results:\n\n• Keep it concise (1-2 pages)\n• Highlight relevant skills and experience\n• Use action verbs (developed, managed, implemented)\n• Include quantifiable achievements\n• Tailor it to the specific role\n\n📎 **Upload your resume** using the button below for AI-powered analysis and personalized suggestions!";
-      }
-      if (message.includes('interview') || message.includes('prepare')) {
-        return "Here are some interview tips for Acme Corp:\n\n• Research our company culture and values\n• Prepare examples using the STAR method\n• Be ready to discuss your technical skills\n• Show enthusiasm for the insurance/fintech industry\n• Ask thoughtful questions about the role\n\nWhat specific role are you interviewing for?";
-      }
-      if (message.includes('salary') || message.includes('compensation')) {
-        return "Our compensation packages are competitive and include:\n\n• Competitive base salary\n• Performance bonuses\n• Health insurance\n• Learning & development budget\n• Flexible work arrangements\n\nExact compensation depends on role, experience, and location. Would you like to discuss a specific position?";
-      }
-      
-      // Add more generic responses for common queries
-      if (message.includes('help') || message.includes('assist') || message.includes('support')) {
-        return "I'm here to help you with your career journey at Acme Corp! 🤝\n\nI can assist you with:\n\n🎯 **Finding the right role** for your skills\n📄 **Resume analysis** and optimization\n💼 **Application process** guidance\n🎤 **Interview preparation** tips\n🏢 **Company information** and culture\n\nWhat would you like to explore first? Feel free to ask me anything or upload your resume for personalized recommendations!";
-      }
-      
-      if (message.includes('hi') || message.includes('hello') || message.includes('hey')) {
-        return "Hello! Welcome to Acme Corp's Recruitment Assistant! 👋\n\nI'm here to help you explore amazing career opportunities with us. Whether you're looking for your first job or your next big career move, I'm excited to assist you!\n\n🚀 **What I can do for you:**\n• Help you find suitable job openings\n• Analyze your resume and suggest improvements\n• Guide you through our application process\n• Provide interview tips and company insights\n\nHow can I help you today?";
-      }
-      
-      if (message.includes('thank') || message.includes('thanks')) {
-        return "You're very welcome! 😊 I'm happy to help you with your career journey at Acme Corp.\n\nIf you have any more questions about job opportunities, applications, or anything else related to careers here, feel free to ask! I'm here to support you every step of the way.\n\nGood luck with your job search! 🌟";
-      }
-    } else {
-      // SIMPLE: Check if user message matches any question in mock data
-      for (const faq of employeeHelpFAQs) {
-        const questionLower = faq.question.toLowerCase();
-        
-        // Skip matching for very short messages (like "hi", "ok", etc.)
-        if (message.length < 4) {
-          continue;
-        }
-        
-        // Check if user message contains the question or vice versa
-        // But exclude partial word matches for short words
-        if (message.length >= 8 && questionLower.includes(message)) {
-          console.log('Found match:', faq.question);
-          return faq.source ? `${faq.answer}\n\n*Source: ${faq.source}*` : faq.answer;
-        }
-        
-        // Check if question is contained in user message (for longer user messages)
-        if (message.length >= 15 && message.includes(questionLower)) {
-          console.log('Found match:', faq.question);
-          return faq.source ? `${faq.answer}\n\n*Source: ${faq.source}*` : faq.answer;
-        }
-        
-        // For medium length messages, check for significant word overlap
-        if (message.length >= 8) {
-          const questionWords = questionLower.split(' ').filter(word => word.length > 3);
-          const messageWords = message.split(' ').filter(word => word.length > 3);
-          
-          let matchCount = 0;
-          for (const qWord of questionWords) {
-            if (messageWords.includes(qWord)) {
-              matchCount++;
-            }
-          }
-          
-          // If more than 50% of significant question words match
-          if (questionWords.length > 0 && matchCount >= Math.ceil(questionWords.length * 0.6)) {
-            console.log('Found match:', faq.question);
-            return faq.source ? `${faq.answer}\n\n*Source: ${faq.source}*` : faq.answer;
-          }
-        }
-      }
-      
-      // Fallback to keyword-based responses
-      if (message.includes('leave') || message.includes('sick') || message.includes('vacation')) {
-        return "I can help you with leave management! Here's how to apply:\n\n• **Sick Leave**: Email your manager and HRBP\n• **Annual Leave**: Use the HR portal or email request\n• **Medical Leave**: Submit medical certificate for >3 days\n• **Work from Home**: Request through your manager\n\nYour current leave balance is available in the HR portal. Need help with anything specific?";
-      }
-      if (message.includes('salary') || message.includes('pay') || message.includes('payslip')) {
-        return "For salary-related queries:\n\n• **Payslips**: Available in the HR portal\n• **Salary Structure**: Contact HRBP for details\n• **Tax Documents**: Download from HR portal\n• **Salary Revision**: Discuss with your manager during appraisal\n\nIs there a specific salary question I can help with?";
-      }
-      if (message.includes('it') || message.includes('computer') || message.includes('laptop') || message.includes('system')) {
-        return "For IT support:\n\n• **Laptop Issues**: Contact IT helpdesk at it-support@acme.example.com\n• **Software Problems**: Raise ticket in IT portal\n• **Password Reset**: Use self-service portal\n• **Network Issues**: Contact IT team immediately\n\nWhat specific IT issue are you facing?";
-      }
-      if (message.includes('hr') || message.includes('policy') || message.includes('benefit')) {
-        return "For HR policies and benefits:\n\n• **Employee Handbook**: Available on HR portal\n• **Benefits**: Health insurance, PF, gratuity\n• **Policies**: Code of conduct, leave policy, WFH policy\n• **HRBP Contact**: Available in your employee directory\n\nWhich policy or benefit would you like to know about?";
-      }
-      if (message.includes('office') || message.includes('facility') || message.includes('cafeteria')) {
-        return "Office facilities available:\n\n• **Cafeteria**: Open 9 AM - 6 PM\n• **Parking**: Assigned slots for employees\n• **Gym**: Available 24/7 with access card\n• **Meeting Rooms**: Book through calendar system\n• **Transport**: Shuttle service available\n\nNeed information about any specific facility?";
-      }
-    }
-    
-    // Default responses based on mode
-    const defaultResponses = {
-      recruitment: [
-        "I'm here to help with your career journey at Acme Corp! I can assist with job applications, resume reviews, interview preparation, and career guidance. What would you like to know?",
-        "Great! I can help you explore career opportunities, optimize your resume, prepare for interviews, and understand our company culture. How can I assist you today?",
-        "Welcome to the recruitment assistant! I can help you find the right role, improve your application, and guide you through our hiring process. What's your question?"
-      ],
-      'employee-help': [
-        "I'm here to help with all your employee needs! I can assist with HR queries, IT support, leave management, office facilities, and company policies. What do you need help with?",
-        "Great! I can help you with workplace issues, HR policies, IT problems, leave applications, and general employee assistance. How can I help you today?",
-        "Welcome to the employee help desk! I'm here to resolve your workplace queries and provide support. What would you like to know?"
-      ]
-    };
-    
-    const responses = defaultResponses[mode];
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
-
   const handleSendMessage = () => {
-    if (inputMessage.trim() && currentMode) {
-      const newMessage = {
-        id: Date.now().toString(),
-        content: inputMessage,
-        sender: 'user' as const,
+    if (!inputMessage.trim() || !currentMode) return;
+    const mode = currentMode;
+    const userInput = inputMessage;
+    const newMessage: Message = {
+      id: makeId(),
+      content: userInput,
+      sender: 'user',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, newMessage]);
+    setInputMessage('');
+
+    // Focus input after sending message
+    schedule(() => inputRef.current?.focus(), 100);
+
+    const deliverBotResponse = (responseContent: string) => {
+      const botResponse: Message = {
+        id: makeId(),
+        content: responseContent,
+        sender: 'bot',
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, newMessage]);
-      const userInput = inputMessage;
-      setInputMessage('');
-      
-      // Focus input after sending message
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
-      
-      // Generate intelligent bot response
-      setTimeout(() => {
-        const botResponse = {
-          id: (Date.now() + 1).toString(),
-          content: generateBotResponse(userInput, currentMode),
-          sender: 'bot' as const,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, botResponse]);
+      setMessages(prev => [...prev, botResponse]);
 
-        // Add mode-specific satisfaction check after bot response (except for special messages)
-        const responseContent = generateBotResponse(userInput, currentMode);
-        if (!responseContent.includes('🎉') && !responseContent.includes('🎫') && !responseContent.includes('📄')) {
-          setTimeout(() => {
-            const satisfactionMessage = {
-              id: (Date.now() + 2).toString(),
-              content: currentMode === 'recruitment' 
-                ? "Would you like to apply for job opportunities we are serving? If yes, please upload your CV below and we'll check where you are suitable!"
-                : "Are you satisfied with this response, or would you like to ask more questions?",
-              sender: 'bot' as const,
-              timestamp: new Date(),
-              isSatisfactionCheck: true,
-              mode: currentMode
-            };
-            setMessages(prev => [...prev, satisfactionMessage]);
-          }, 1500);
+      // Add mode-specific satisfaction check after bot response (except for special messages)
+      if (!responseContent.includes('🎉') && !responseContent.includes('🎫') && !responseContent.includes('📄')) {
+        schedule(() => {
+          const satisfactionMessage: Message = {
+            id: makeId(),
+            content: mode === 'recruitment'
+              ? "Would you like to apply for job opportunities we are serving? If yes, please upload your CV below and we'll check where you are suitable!"
+              : "Are you satisfied with this response, or would you like to ask more questions?",
+            sender: 'bot',
+            timestamp: new Date(),
+            isSatisfactionCheck: true,
+            mode
+          };
+          setMessages(prev => [...prev, satisfactionMessage]);
+        }, 1500);
+      }
+    };
+
+    if (aiEnabled) {
+      // AI mode: grounded LLM answer; falls back to the rule engine on any error
+      const epoch = conversationEpoch.current;
+      const history: LLMHistoryItem[] = messages
+        .filter(msg => !msg.isSatisfactionCheck)
+        .slice(-6)
+        .map(msg => ({
+          role: msg.sender === 'user' ? ('user' as const) : ('assistant' as const),
+          content: msg.content
+        }));
+
+      setIsBotTyping(true);
+      generateLLMResponse(userInput, mode, history).then((result) => {
+        if (conversationEpoch.current !== epoch) return; // conversation was reset
+        setIsBotTyping(false);
+        let content = result.content ?? generateBotResponse(userInput, mode);
+        if (!result.content && result.error === 'auth') {
+          content += '\n\n⚠️ AI mode: your API key was rejected — check Settings. This answer came from the built-in knowledge base.';
+        } else if (!result.content) {
+          content += '\n\n💤 AI mode was unavailable — this answer came from the built-in knowledge base.';
         }
-      }, 1000);
+        deliverBotResponse(content);
+      });
+      return;
     }
+
+    // Rule engine: generate the reply once and reuse it for the satisfaction check
+    const responseContent = generateBotResponse(userInput, mode);
+    schedule(() => deliverBotResponse(responseContent), 1000);
   };
 
   const handleModeChange = (mode: ChatMode) => {
+    clearPendingTimeouts();
+    setIsBotTyping(false);
     setCurrentMode(mode);
     setMessages([{
-      id: '1',
+      id: makeId(),
       content: mode === 'recruitment'
         ? "Welcome to the Recruitment Assistant! I can help you with job applications, resume reviews, and career guidance. How can I assist you today?"
         : "Welcome to the Employee Help Desk! I can help you with HR queries, IT support, workplace issues, and general employee assistance. How can I help you today?",
@@ -227,11 +164,11 @@ function App() {
   const generateTicketId = (): string => {
     const timestamp = Date.now().toString().slice(-6);
     const random = Math.random().toString(36).substring(2, 5).toUpperCase();
-    return `PB-${timestamp}-${random}`;
+    return `TKT-${timestamp}-${random}`;
   };
 
-  const generateConversationSummary = (messages: any[]) => {
-    const userMessages = messages.filter(msg => msg.sender === 'user');
+  const generateConversationSummary = (msgs: Message[]) => {
+    const userMessages = msgs.filter(msg => msg.sender === 'user');
     
     if (userMessages.length === 0) return '';
     
@@ -252,7 +189,7 @@ Status: Issue not fully resolved - requires additional support`;
       } else {
         // Thank you message for recruitment
         const thankYouMessage = {
-          id: Date.now().toString(),
+          id: makeId(),
           content: "🎉 Thank you for visiting our Recruitment Assistant! We appreciate your interest in Acme Corp. Feel free to come back anytime when you're ready to explore career opportunities with us. Good luck with your job search!",
           sender: 'bot' as const,
           timestamp: new Date()
@@ -264,7 +201,7 @@ Status: Issue not fully resolved - requires additional support`;
       if (isSatisfied) {
         // End conversation with satisfaction message
         const satisfactionMessage = {
-          id: Date.now().toString(),
+          id: makeId(),
           content: "🎉 Thank you for using HR Buddy! We're glad we could help you today. Feel free to start a new conversation anytime you need assistance.",
           sender: 'bot' as const,
           timestamp: new Date()
@@ -286,13 +223,13 @@ Status: Issue not fully resolved - requires additional support`;
             currentSummary += summary[index];
             setConversationSummary(currentSummary);
             index++;
-            setTimeout(typeSummary, 30); // Typing speed
+            schedule(typeSummary, 30); // Typing speed
           } else {
             setIsGeneratingSummary(false);
           }
         };
-        
-        setTimeout(typeSummary, 500); // Start typing after 500ms
+
+        schedule(typeSummary, 500); // Start typing after 500ms
       }
     }
   };
@@ -307,7 +244,7 @@ Status: Issue not fully resolved - requires additional support`;
     setShowTicketConfirmation(true);
     
     const ticketMessage = {
-      id: Date.now().toString(),
+      id: makeId(),
       content: ` Your support ticket has been created with reference ID: **${ticketId}**\n\nOur backend team will reach out to you shortly. You can also contact us directly using this reference number.`,
       sender: 'bot' as const,
       timestamp: new Date()
@@ -319,6 +256,8 @@ Status: Issue not fully resolved - requires additional support`;
   };
 
   const startNewConversation = () => {
+    clearPendingTimeouts();
+    setIsBotTyping(false);
     setCurrentMode(null);
     setMessages([]);
     setInputMessage('');
@@ -336,9 +275,28 @@ Status: Issue not fully resolved - requires additional support`;
     setIsChatbotOpen(!isChatbotOpen);
   };
 
+  const openSettings = () => {
+    setApiKeyInput(getApiKey() ?? '');
+    setModelInput(getModel());
+    setShowSettings(true);
+  };
+
+  const handleSettingsSave = () => {
+    saveApiKey(apiKeyInput);
+    saveModel(modelInput);
+    setAiEnabled(isAIModeEnabled());
+    setShowSettings(false);
+  };
+
+  const handleClearApiKey = () => {
+    clearApiKey();
+    setApiKeyInput('');
+    setAiEnabled(false);
+  };
+
   const handleProceedApplication = () => {
     const confirmationMessage = {
-      id: Date.now().toString(),
+      id: makeId(),
       content: `✅ **Application Submitted Successfully!**\n\nYour profile has been forwarded to our backend team for review. Here's what happens next:\n\n• **Step 1**: HR team will review your application\n• **Step 2**: You'll receive an email confirmation\n• **Step 3**: Shortlisted candidates will be contacted\n• **Step 4**: Interview scheduling and process\n\n**Expected Timeline**: 3-5 business days\n\nThank you for considering Acme Corp as your next career opportunity. We look forward to connecting with you! 🚀`,
       sender: 'bot' as const,
       timestamp: new Date()
@@ -353,135 +311,113 @@ Status: Issue not fully resolved - requires additional support`;
         <Routes>
           <Route path="/" element={
             <>
-              <LandingBackground />
+              <LandingBackground onStartChat={() => setIsChatbotOpen(true)} />
               
               {/* Logo Button to Control Chatbot - Only show when chatbot is closed */}
               {!isChatbotOpen && (
-                <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 10000 }}>
-                  {/* Tooltip Message */}
+                <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 10000, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {/* Friendly label pill */}
                   <div style={{
-                    position: 'absolute',
-                    bottom: '10px',
-                    right: '90px',
-                    backgroundColor: '#dbeafe',
-                    color: '#1e40af',
-                    padding: '12px 16px',
-                    borderRadius: '12px',
+                    backgroundColor: 'white',
+                    color: '#0f172a',
+                    padding: '10px 16px',
+                    borderRadius: '14px',
                     fontSize: '14px',
-                    fontWeight: '500',
-                    maxWidth: '220px',
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-                    opacity: 0,
-                    transform: 'translateX(10px)',
-                    transition: 'all 0.3s ease',
-                    pointerEvents: 'none',
+                    fontWeight: 600,
+                    boxShadow: '0 8px 24px -8px rgba(15, 23, 42, 0.25)',
                     whiteSpace: 'nowrap',
-                    border: '1px solid #93c5fd'
-                  }} id="chatbot-tooltip">
-                    👋 Hi! Need help? 
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <span style={{ color: '#4f46e5' }}>Need help?</span> Chat with us 👋
                   </div>
-                  
+
                   <button
+                    className="dm-launcher dm-lift"
                     onClick={toggleChatbot}
+                    aria-label="Open HR Buddy chat"
                     style={{
-                      width: '80px',
-                      height: '80px',
+                      width: '66px',
+                      height: '66px',
                       borderRadius: '50%',
-                      backgroundColor: 'transparent',
-                      border: 'none',
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: '0 6px 20px rgba(0, 0, 0, 0.25)',
-                      transition: 'all 0.3s ease',
-                      overflow: 'hidden',
-                      position: 'relative'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.transform = 'scale(1.1)';
-                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.35)';
-                      const tooltip = document.getElementById('chatbot-tooltip');
-                      if (tooltip) {
-                        tooltip.style.opacity = '1';
-                        tooltip.style.transform = 'translateX(0)';
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.25)';
-                      const tooltip = document.getElementById('chatbot-tooltip');
-                      if (tooltip) {
-                        tooltip.style.opacity = '0';
-                        tooltip.style.transform = 'translateX(10px)';
-                      }
+                      boxShadow: '0 12px 30px -6px rgba(79, 70, 229, 0.45)',
+                      position: 'relative',
+                      padding: 0
                     }}
                   >
-                    <img 
-                      src={Logo} 
-                      alt="HR Buddy" 
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        borderRadius: '50%'
-                      }}
-                    />
+                    <Logo size={40} />
                   </button>
                 </div>
               )}
 
               {/* Chatbot - Only show when isChatbotOpen is true */}
               {isChatbotOpen && (
-                <div style={{position: 'fixed', top: 0, right: 0, width: '600px', height: '100vh', backgroundColor: 'white', border: '2px solid #3b82f6', zIndex: 9999, display: 'flex', flexDirection: 'column'}}>
+                <div className="dm-window" style={{position: 'fixed', top: '24px', right: '24px', bottom: '24px', width: '420px', maxWidth: 'calc(100vw - 48px)', backgroundColor: 'white', borderRadius: '24px', boxShadow: 'var(--dm-shadow)', zIndex: 9999, display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
                         {/* Chatbot Header */}
-                        <div style={{background: 'linear-gradient(to right, #3b82f6, #2563eb)', color: 'white', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                          <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
-                            <div style={{width: '48px', height: '48px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'}}>
-                              <img 
-                                src={Logo} 
-                                alt="HR Buddy Logo" 
-                                style={{
-                                  width: '40px',
-                                  height: '40px',
-                                  objectFit: 'contain'
-                                }}
-                              />
+                        <div style={{background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)', color: 'white', padding: '16px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px'}}>
+                          <div style={{display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0}}>
+                            <div style={{position: 'relative', width: '44px', height: '44px', flexShrink: 0, backgroundColor: 'white', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px -2px rgba(0,0,0,0.2)'}}>
+                              <Logo size={32} />
+                              <span style={{position: 'absolute', bottom: '-2px', right: '-2px', width: '13px', height: '13px', backgroundColor: '#4ade80', borderRadius: '50%', border: '2px solid #4338ca'}} />
                             </div>
-                            <div>
-                              <h1 style={{fontSize: '18px', fontWeight: 'bold', margin: 0}}>HR Buddy</h1>
-                              <p style={{fontSize: '14px', color: '#bfdbfe', margin: 0}}>
-                                {currentMode === null ? 'Choose your assistance mode' : 
+                            <div style={{minWidth: 0}}>
+                              <h1 style={{fontSize: '17px', fontWeight: 700, margin: 0, letterSpacing: '-0.01em', whiteSpace: 'nowrap'}}>HR Buddy</h1>
+                              <p style={{fontSize: '13px', color: '#c7d2fe', margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                                {currentMode === null ? 'Choose your assistance mode' :
                                  currentMode === 'recruitment' ? 'Recruitment & Career Support' : 'Employee Help Desk'}
+                                {aiEnabled && (
+                                  <span style={{backgroundColor: 'rgba(255,255,255,0.2)', padding: '1px 7px', borderRadius: '99px', fontSize: '11px', fontWeight: 600}}>⚡ AI</span>
+                                )}
                               </p>
                             </div>
                           </div>
-                          <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                          <div style={{display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0}}>
                             {currentMode && (
                               <>
                                 <button
+                                  className="dm-lift"
                                   onClick={() => handleModeChange(currentMode === 'recruitment' ? 'employee-help' : 'recruitment')}
-                                  style={{padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px'}}
+                                  style={{padding: '7px 12px', backgroundColor: 'rgba(255,255,255,0.16)', border: 'none', borderRadius: '10px', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px'}}
+                                  title="Switch assistant mode"
                                 >
-                                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                  <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24" style={{flexShrink: 0}}>
                                     <path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                                   </svg>
-                                  Switch
+                                  <span className="dm-hide-sm">Switch</span>
                                 </button>
                                 <button
+                                  className="dm-lift"
                                   onClick={startNewConversation}
-                                  style={{padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px'}}
+                                  style={{padding: '7px 10px', backgroundColor: 'rgba(255,255,255,0.16)', border: 'none', borderRadius: '10px', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+                                  title="Start a new conversation"
                                 >
-                                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M4 4h5v2H6v2H4V4zm15 0h-5v2h3v2h2V4zM4 15h2v2h3v2H4v-4zm15 0h-2v2h-3v2h5v-4z"/>
+                                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                                    <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/>
+                                    <path d="M3 3v5h5"/>
                                   </svg>
-                                  New Chat
                                 </button>
                               </>
                             )}
                             <button
+                              className="dm-lift"
+                              onClick={openSettings}
+                              style={{padding: '8px', backgroundColor: 'rgba(255,255,255,0.16)', border: 'none', borderRadius: '10px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+                              title="AI Mode Settings"
+                            >
+                              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                              </svg>
+                            </button>
+                            <button
+                              className="dm-lift"
                               onClick={toggleChatbot}
-                              style={{padding: '8px', backgroundColor: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+                              style={{padding: '8px', backgroundColor: 'rgba(255,255,255,0.16)', border: 'none', borderRadius: '10px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'}}
                               title="Close Chatbot"
                             >
                               <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
@@ -494,15 +430,12 @@ Status: Issue not fully resolved - requires additional support`;
                 {/* Mode Selection Screen */}
                 {currentMode === null ? (
                   <div style={{
-                    flex: 1, 
-                    padding: '32px 24px', 
-                    backgroundImage: `url(${Background})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
+                    flex: 1,
+                    padding: '32px 24px',
+                    background: 'linear-gradient(180deg, #f8fafc 0%, #eef1f6 100%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
                     justifyContent: 'center',
                     position: 'relative'
                   }}>
@@ -513,100 +446,81 @@ Status: Issue not fully resolved - requires additional support`;
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                      backdropFilter: 'blur(0.5px)'
+                      background: 'linear-gradient(180deg, rgba(248,250,252,0.92) 0%, rgba(241,245,249,0.96) 100%)'
                     }}></div>
-                    <div style={{textAlign: 'center', marginBottom: '32px', position: 'relative', zIndex: 1}}>
-                      <h2 style={{fontSize: '24px', fontWeight: 'bold', color: '#1f2937', margin: '0 0 8px 0'}}>Welcome to HR Buddy</h2>
-                      <p style={{fontSize: '16px', color: '#6b7280', margin: 0}}>Choose how I can help you today</p>
+                    <div style={{textAlign: 'center', marginBottom: '28px', position: 'relative', zIndex: 1}}>
+                      <h2 style={{fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px 0', letterSpacing: '-0.02em'}}>👋 Welcome to HR Buddy</h2>
+                      <p style={{fontSize: '15px', color: '#64748b', margin: 0}}>How can I help you today?</p>
                     </div>
-                    
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', maxWidth: '300px', position: 'relative', zIndex: 1}}>
-                      <button
-                        onClick={() => handleModeChange('recruitment')}
-                        style={{
-                          padding: '20px 24px',
-                          backgroundColor: 'white',
-                          border: '2px solid #3b82f6',
-                          borderRadius: '12px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '16px',
-                          transition: 'all 0.2s',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.backgroundColor = '#eff6ff';
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.backgroundColor = 'white';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-                        }}
-                      >
-                        <div style={{width: '48px', height: '48px', backgroundColor: '#3b82f6', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                          <span style={{fontSize: '24px'}}>💼</span>
-                        </div>
-                        <div style={{textAlign: 'left'}}>
-                          <h3 style={{fontSize: '18px', fontWeight: 'bold', color: '#1f2937', margin: '0 0 4px 0'}}>Recruitment Assistant</h3>
-                          <p style={{fontSize: '14px', color: '#6b7280', margin: 0}}>Job applications, resume reviews, career guidance</p>
-                        </div>
-                      </button>
-                      
-                      <button
-                        onClick={() => handleModeChange('employee-help')}
-                        style={{
-                          padding: '20px 24px',
-                          backgroundColor: 'white',
-                          border: '2px solid #10b981',
-                          borderRadius: '12px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '16px',
-                          transition: 'all 0.2s',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.backgroundColor = '#ecfdf5';
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.backgroundColor = 'white';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-                        }}
-                      >
-                        <div style={{width: '48px', height: '48px', backgroundColor: '#10b981', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                          <span style={{fontSize: '24px'}}>🏢</span>
-                        </div>
-                        <div style={{textAlign: 'left'}}>
-                          <h3 style={{fontSize: '18px', fontWeight: 'bold', color: '#1f2937', margin: '0 0 4px 0'}}>Employee Help Desk</h3>
-                          <p style={{fontSize: '14px', color: '#6b7280', margin: 0}}>HR queries, workplace assistance</p>
-                        </div>
-                      </button>
+
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', maxWidth: '340px', position: 'relative', zIndex: 1}}>
+                      {[
+                        { mode: 'recruitment' as ChatMode, emoji: '💼', accent: '#4f46e5', bg: '#eef2ff', title: 'Recruitment Assistant', desc: 'Job openings, resume review & applications' },
+                        { mode: 'employee-help' as ChatMode, emoji: '🏢', accent: '#10b981', bg: '#ecfdf5', title: 'Employee Help Desk', desc: 'Leave, payroll, IT support & HR policies' }
+                      ].map((card) => (
+                        <button
+                          key={card.mode}
+                          className="dm-lift"
+                          onClick={() => handleModeChange(card.mode)}
+                          style={{
+                            padding: '18px 18px',
+                            backgroundColor: 'white',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '18px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '14px',
+                            boxShadow: '0 6px 18px -8px rgba(15,23,42,0.15)',
+                            textAlign: 'left'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.borderColor = card.accent;
+                            e.currentTarget.style.boxShadow = `0 12px 28px -10px ${card.accent}66`;
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.borderColor = '#e2e8f0';
+                            e.currentTarget.style.boxShadow = '0 6px 18px -8px rgba(15,23,42,0.15)';
+                          }}
+                        >
+                          <div style={{width: '52px', height: '52px', flexShrink: 0, background: card.bg, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px'}}>
+                            {card.emoji}
+                          </div>
+                          <div style={{flex: 1}}>
+                            <h3 style={{fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: '0 0 3px 0'}}>{card.title}</h3>
+                            <p style={{fontSize: '13px', color: '#64748b', margin: 0, lineHeight: 1.4}}>{card.desc}</p>
+                          </div>
+                          <svg width="20" height="20" fill="none" stroke={card.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{flexShrink: 0}}>
+                            <path d="M9 18l6-6-6-6"/>
+                          </svg>
+                        </button>
+                      ))}
                     </div>
+                    <p style={{fontSize: '12px', color: '#94a3b8', marginTop: '24px', position: 'relative', zIndex: 1, textAlign: 'center'}}>
+                      Powered by DualMind · your data stays in your browser
+                    </p>
                   </div>
                 ) : (
                   /* Chat Messages Area */
-                  <div style={{flex: 1, padding: '16px', overflowY: 'auto', backgroundColor: '#f9fafb'}}>
+                  <div className="dm-scroll" style={{flex: 1, padding: '18px 16px', overflowY: 'auto', background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)'}}>
                     {messages.map((message) => (
-                      <div key={message.id} style={{
+                      <div key={message.id} className="dm-msg" style={{
                         display: 'flex',
                         justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start',
-                        marginBottom: '16px'
+                        marginBottom: '14px'
                       }}>
                         <div style={{
-                          backgroundColor: message.sender === 'user' ? '#3b82f6' : '#e5e7eb',
-                          color: message.sender === 'user' ? 'white' : 'black',
-                          padding: '12px 16px',
-                          borderRadius: '16px',
-                          maxWidth: '80%',
-                          fontSize: '14px'
+                          background: message.sender === 'user' ? 'linear-gradient(135deg, #6366f1, #4338ca)' : '#ffffff',
+                          color: message.sender === 'user' ? 'white' : '#1e293b',
+                          padding: '11px 15px',
+                          borderRadius: '18px',
+                          borderBottomRightRadius: message.sender === 'user' ? '5px' : '18px',
+                          borderBottomLeftRadius: message.sender === 'user' ? '18px' : '5px',
+                          maxWidth: '82%',
+                          fontSize: '14px',
+                          lineHeight: 1.5,
+                          boxShadow: message.sender === 'user' ? '0 6px 16px -6px rgba(79,70,229,0.5)' : '0 4px 12px -6px rgba(15,23,42,0.12)',
+                          border: message.sender === 'user' ? 'none' : '1px solid #eef2f6'
                         }}>
                           <div style={{margin: 0, whiteSpace: 'pre-line'}}>
                             {message.content.split('\n').map((line: string, index: number) => {
@@ -650,19 +564,21 @@ Status: Issue not fully resolved - requires additional support`;
                               justifyContent: 'center'
                             }}>
                               <button
-                                onClick={() => handleSatisfactionResponse(true, message.mode || currentMode)}
+                                className="dm-lift"
+                                onClick={() => handleSatisfactionResponse(true, message.mode ?? currentMode ?? 'employee-help')}
                                 style={{
-                                  padding: '8px 16px',
+                                  padding: '9px 16px',
                                   backgroundColor: '#10b981',
                                   color: 'white',
                                   border: 'none',
-                                  borderRadius: '20px',
+                                  borderRadius: '999px',
                                   cursor: 'pointer',
                                   fontSize: '12px',
-                                  fontWeight: '500',
+                                  fontWeight: 600,
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: '4px'
+                                  gap: '5px',
+                                  boxShadow: '0 4px 12px -5px rgba(16,185,129,0.6)'
                                 }}
                               >
                                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
@@ -671,19 +587,20 @@ Status: Issue not fully resolved - requires additional support`;
                                 {message.mode === 'recruitment' ? 'Yes, I want to apply' : "Yes, I'm satisfied"}
                               </button>
                               <button
-                                onClick={() => handleSatisfactionResponse(false, message.mode || currentMode)}
+                                className="dm-lift"
+                                onClick={() => handleSatisfactionResponse(false, message.mode ?? currentMode ?? 'employee-help')}
                                 style={{
-                                  padding: '8px 16px',
-                                  backgroundColor: '#ef4444',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '20px',
+                                  padding: '9px 16px',
+                                  backgroundColor: 'white',
+                                  color: '#64748b',
+                                  border: '1px solid #e2e8f0',
+                                  borderRadius: '999px',
                                   cursor: 'pointer',
                                   fontSize: '12px',
-                                  fontWeight: '500',
+                                  fontWeight: 600,
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: '4px'
+                                  gap: '5px'
                                 }}
                               >
                                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
@@ -696,6 +613,26 @@ Status: Issue not fully resolved - requires additional support`;
                         </div>
                       </div>
                     ))}
+                    {isBotTyping && (
+                      <div className="dm-msg" style={{display: 'flex', justifyContent: 'flex-start', marginBottom: '14px'}}>
+                        <div style={{
+                          backgroundColor: '#ffffff',
+                          padding: '14px 16px',
+                          borderRadius: '18px',
+                          borderBottomLeftRadius: '5px',
+                          boxShadow: '0 4px 12px -6px rgba(15,23,42,0.12)',
+                          border: '1px solid #eef2f6',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}>
+                          <span className="dm-dot" />
+                          <span className="dm-dot" />
+                          <span className="dm-dot" />
+                        </div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
                   </div>
                 )}
                 
@@ -704,23 +641,25 @@ Status: Issue not fully resolved - requires additional support`;
                   <>
                     {/* Quick Actions */}
                     {currentMode === 'recruitment' && (
-                      <div style={{padding: '12px 16px', borderTop: '1px solid #e5e7eb', backgroundColor: '#f9fafb'}}>
-                        <button 
+                      <div style={{padding: '12px 16px 0', backgroundColor: 'white'}}>
+                        <button
+                          className="dm-lift"
                           onClick={() => setShowResumeUpload(true)}
                           style={{
                             width: '100%',
                             padding: '12px',
-                            backgroundColor: '#10b981',
+                            background: 'linear-gradient(135deg, #10b981, #059669)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '8px',
+                            borderRadius: '12px',
                             cursor: 'pointer',
                             fontSize: '14px',
-                            fontWeight: '500',
+                            fontWeight: 600,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '8px'
+                            gap: '8px',
+                            boxShadow: '0 6px 16px -6px rgba(16,185,129,0.6)'
                           }}
                         >
                           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
@@ -747,23 +686,25 @@ Status: Issue not fully resolved - requires additional support`;
                              !mostRecentAnalysis.content.includes("We're sorry, but we couldn't find a perfect match") && 
                              !mostRecentAnalysis.content.includes("Application Rejected");
                     })() && (
-                      <div style={{padding: '12px 16px', borderTop: '1px solid #e5e7eb', backgroundColor: '#f0f9ff'}}>
-                        <button 
+                      <div style={{padding: '12px 16px 0', backgroundColor: 'white'}}>
+                        <button
+                          className="dm-lift"
                           onClick={handleProceedApplication}
                           style={{
                             width: '100%',
                             padding: '12px',
-                            backgroundColor: '#3b82f6',
+                            background: 'linear-gradient(135deg, #6366f1, #4338ca)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '8px',
+                            borderRadius: '12px',
                             cursor: 'pointer',
                             fontSize: '14px',
-                            fontWeight: '500',
+                            fontWeight: 600,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '8px'
+                            gap: '8px',
+                            boxShadow: '0 6px 16px -6px rgba(79,70,229,0.6)'
                           }}
                         >
                           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
@@ -775,31 +716,41 @@ Status: Issue not fully resolved - requires additional support`;
                     )}
 
                     {/* Message Input */}
-                    <div style={{padding: '16px', borderTop: '1px solid #e5e7eb', backgroundColor: 'white'}}>
-                      <div style={{display: 'flex', gap: '8px'}}>
+                    <div style={{padding: '14px 16px', borderTop: '1px solid #eef2f6', backgroundColor: 'white'}}>
+                      <div style={{display: 'flex', gap: '10px', alignItems: 'center', backgroundColor: '#f1f5f9', borderRadius: '26px', padding: '5px 5px 5px 8px', border: '1px solid #e2e8f0', transition: 'border-color 0.15s ease'}}>
                         <input
                           ref={inputRef}
                           type="text"
                           value={inputMessage}
                           onChange={(e) => setInputMessage(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                          placeholder="Type your message..."
-                          style={{flex: 1, padding: '12px', border: '1px solid #d1d5db', borderRadius: '24px', outline: 'none', fontSize: '14px'}}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                          onFocus={(e) => { e.currentTarget.parentElement!.style.borderColor = '#818cf8'; }}
+                          onBlur={(e) => { e.currentTarget.parentElement!.style.borderColor = '#e2e8f0'; }}
+                          placeholder="Type your message…"
+                          style={{flex: 1, padding: '9px 8px', border: 'none', backgroundColor: 'transparent', outline: 'none', fontSize: '14px', color: '#1e293b'}}
                         />
                         <button
+                          className="dm-lift"
                           onClick={handleSendMessage}
                           disabled={!inputMessage.trim()}
+                          aria-label="Send message"
                           style={{
-                            padding: '12px',
-                            backgroundColor: inputMessage.trim() ? '#3b82f6' : '#9ca3af',
+                            width: '40px',
+                            height: '40px',
+                            flexShrink: 0,
+                            background: inputMessage.trim() ? 'linear-gradient(135deg, #6366f1, #4338ca)' : '#cbd5e1',
                             color: 'white',
                             border: 'none',
                             borderRadius: '50%',
-                            cursor: inputMessage.trim() ? 'pointer' : 'not-allowed'
+                            cursor: inputMessage.trim() ? 'pointer' : 'not-allowed',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: inputMessage.trim() ? '0 4px 12px -4px rgba(79,70,229,0.6)' : 'none'
                           }}
                         >
-                          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                          <svg width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                            <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/>
                           </svg>
                         </button>
                       </div>
@@ -866,353 +817,20 @@ Status: Issue not fully resolved - requires additional support`;
                         id="resume-upload"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (file) {
-                            // Simulate AI analysis with real file content parsing
-                            setTimeout(() => {
-                              // Extract name from file
-                              const extractedName = file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
-                              
-                              // Parse resume content from uploaded file
-                              const parseResumeContent = async (file: File) => {
-                                return new Promise<{
-                                  name: string;
-                                  experience: number;
-                                  skills: string[];
-                                  education: string;
-                                  location: string;
-                                  currentRole: string;
-                                  email?: string;
-                                  phone?: string;
-                                }>((resolve) => {
-                                  // Simulate reading file content (in real implementation, use PDF.js or similar)
-                                  const reader = new FileReader();
-                                  
-                                  reader.onload = (e) => {
-                                    // Read the actual file content
-                                    const fileContent = e.target?.result as string || '';
-                                    const fileName = file.name.toLowerCase();
-                                    
-                                    console.log('File name:', fileName);
-                                    console.log('File content:', fileContent); // Debug log
-                                    
-                                    // Extract data from actual file content using regex patterns
-                                    const extractDataFromContent = (content: string) => {
-                                      // Extract name (look for "Name:" pattern)
-                                      const nameMatch = content.match(/name:\s*([^\n\r]+)/i);
-                                      const extractedNameFromContent = nameMatch ? nameMatch[1].trim() : extractedName;
-                                      
-                                      // Extract email
-                                      const emailMatch = content.match(/email:\s*([^\n\r]+)/i);
-                                      const email = emailMatch ? emailMatch[1].trim() : undefined;
-                                      
-                                      // Extract phone
-                                      const phoneMatch = content.match(/mobile\s*number:\s*([^\n\r]+)/i);
-                                      const phone = phoneMatch ? phoneMatch[1].trim() : undefined;
-                                      
-                                      // Extract skills
-                                      const skillsMatch = content.match(/skills:\s*([^\n\r]+)/i);
-                                      const skills = skillsMatch ? 
-                                        skillsMatch[1].split(',').map(s => s.trim()) : 
-                                        ["Basic Computer", "Communication"];
-                                      
-                                      // Extract experience - improved pattern matching
-                                      const expMatch = content.match(/experience:\s*([^\n\r]+)/i);
-                                      let experience = 0.5; // default
-                                      
-                                      if (expMatch) {
-                                        const expText = expMatch[1].toLowerCase();
-                                        console.log('Experience text found:', expText); // Debug log
-                                        
-                                        // Check for months first
-                                        if (expText.includes('20 months') || expText.includes('20 month')) {
-                                          experience = 1.67; // 20 months = 20/12 = 1.67 years
-                                        } else if (expText.includes('18 months') || expText.includes('18 month')) {
-                                          experience = 1.5;
-                                        } else if (expText.includes('15 months') || expText.includes('15 month')) {
-                                          experience = 1.25;
-                                        } else if (expText.includes('12 months') || expText.includes('12 month')) {
-                                          experience = 1.0;
-                                        } else if (expText.includes('10 months') || expText.includes('10 month')) {
-                                          experience = 0.83;
-                                        } else if (expText.includes('8 months') || expText.includes('8 month')) {
-                                          experience = 0.67;
-                                        } else if (expText.includes('6 months') || expText.includes('6 month')) {
-                                          experience = 0.5;
-                                        } else if (expText.includes('3 months') || expText.includes('3 month')) {
-                                          experience = 0.25;
-                                        } else if (expText.includes('2 months') || expText.includes('2 month')) {
-                                          experience = 0.17;
-                                        } else if (expText.includes('1 month') || expText.includes('1 month')) {
-                                          experience = 0.08;
-                                        }
-                                        // Check for years
-                                        else if (expText.includes('7 year') || expText.includes('7yr')) {
-                                          experience = 7.0;
-                                        } else if (expText.includes('6 year') || expText.includes('6yr')) {
-                                          experience = 6.0;
-                                        } else if (expText.includes('5 year') || expText.includes('5yr')) {
-                                          experience = 5.0;
-                                        } else if (expText.includes('4 year') || expText.includes('4yr')) {
-                                          experience = 4.0;
-                                        } else if (expText.includes('3 year') || expText.includes('3yr')) {
-                                          experience = 3.0;
-                                        } else if (expText.includes('2.5 year') || expText.includes('2.5yr')) {
-                                          experience = 2.5;
-                                        } else if (expText.includes('2 year') || expText.includes('2yr')) {
-                                          experience = 2.0;
-                                        } else if (expText.includes('1.5 year') || expText.includes('1.5yr')) {
-                                          experience = 1.5;
-                                        } else if (expText.includes('1.2 year') || expText.includes('1.2yr')) {
-                                          experience = 1.2;
-                                        } else if (expText.includes('1 year') || expText.includes('1yr')) {
-                                          experience = 1.0;
-                                        }
-                                      }
-                                      
-                                      return {
-                                        name: extractedNameFromContent,
-                                        experience,
-                                        skills,
-                                        education: "B.Com", // Default for demo
-                                        location: "Gurgaon", // Default for demo
-                                        currentRole: experience < 1 ? "Fresher" : "Software Engineer",
-                                        email,
-                                        phone
-                                      };
-                                    };
-                                    
-                                    // Check if it's a PDF file (which can't be read as text)
-                                    if (fileName.endsWith('.pdf')) {
-                                      // For PDF files, we need to simulate content extraction
-                                      // In a real implementation, you'd use PDF.js or similar
-                                      console.log('PDF file detected, simulating content extraction');
-                                      
-                                      // Simulate PDF content extraction based on filename
-                                      let simulatedContent = '';
-                                      
-                                      if (fileName.includes('cv for hr h') || fileName.includes('hr h')) {
-                                        simulatedContent = `CV
-Name: Rohan Sharma
-Email: rohan.sharma@email.com
-Mobile number: 9876543210
-Skills: Dance, Singing and cycling
-Experience: 2 months.`;
-                                      } else if (fileName.includes('dummy hr') || fileName.includes('dummy_hr')) {
-                                        // Specific rejection case for "Dummy Hr"
-                                        simulatedContent = `CV
-Name: Dummy HR Candidate
-Email: dummy.hr@email.com
-Mobile number: 9876543212
-Skills: Basic Computer, Communication
-Experience: 8 months`;
-                                      } else if (fileName.includes('my cv') || fileName.includes('my_cv')) {
-                                        // Specific rejection case for "My CV"
-                                        simulatedContent = `CV
-Name: My CV Candidate
-Email: my.cv@email.com
-Mobile number: 9876543213
-Skills: Basic Skills, Learning
-Experience: 6 months`;
-                                      } else if (fileName.includes('20') || fileName.includes('twenty')) {
-                                        simulatedContent = `CV
-Name: Experienced Candidate
-Email: experienced@email.com
-Mobile number: 9876543210
-Skills: React, JavaScript, Node.js, Python, SQL, AWS
-Experience: 20 months`;
-                                      } else if (fileName.includes('approved') || fileName.includes('accepted')) {
-                                        // Specific approval case for demo
-                                        simulatedContent = `CV
-Name: Approved Candidate
-Email: approved@email.com
-Mobile number: 9876543214
-Skills: React, JavaScript, Node.js, Python, SQL, AWS, Docker
-Experience: 3 years`;
-                                      } else if (fileName.includes('senior') || fileName.includes('lead')) {
-                                        // Senior level approval case
-                                        simulatedContent = `CV
-Name: Senior Developer
-Email: senior@email.com
-Mobile number: 9876543215
-Skills: React, JavaScript, Node.js, Python, SQL, AWS, Docker, Kubernetes, Microservices
-Experience: 5 years`;
-                                      } else {
-                                        // Default simulation for unknown PDFs
-                                        simulatedContent = `CV
-Name: ${extractedName}
-Email: ${extractedName.toLowerCase().replace(/\s+/g, '.')}@email.com
-Mobile number: 9876543211
-Skills: React, JavaScript, Node.js, Python, SQL
-Experience: 2 years`;
-                                      }
-                                      
-                                      const extractedData = extractDataFromContent(simulatedContent);
-                                      console.log('PDF extracted data:', extractedData); // Debug log
-                                      resolve(extractedData);
-                                    } else {
-                                      // For text files, check for specific rejection cases first
-                                      if (fileName.includes('dummy hr') || fileName.includes('dummy_hr')) {
-                                        // Specific rejection case for "Dummy Hr" text file
-                                        const simulatedContent = `CV
-Name: Dummy HR Candidate
-Email: dummy.hr@email.com
-Mobile number: 9876543212
-Skills: Basic Computer, Communication
-Experience: 8 months`;
-                                        const extractedData = extractDataFromContent(simulatedContent);
-                                        console.log('Dummy HR text file extracted data:', extractedData);
-                                        resolve(extractedData);
-                                      } else if (fileName.includes('my cv') || fileName.includes('my_cv')) {
-                                        // Specific rejection case for "My CV" text file
-                                        const simulatedContent = `CV
-Name: My CV Candidate
-Email: my.cv@email.com
-Mobile number: 9876543213
-Skills: Basic Skills, Learning
-Experience: 6 months`;
-                                        const extractedData = extractDataFromContent(simulatedContent);
-                                        console.log('My CV text file extracted data:', extractedData);
-                                        resolve(extractedData);
-                                      } else if (fileName.includes('approved') || fileName.includes('accepted')) {
-                                        // Specific approval case for text files
-                                        const simulatedContent = `CV
-Name: Approved Candidate
-Email: approved@email.com
-Mobile number: 9876543214
-Skills: React, JavaScript, Node.js, Python, SQL, AWS, Docker
-Experience: 3 years`;
-                                        const extractedData = extractDataFromContent(simulatedContent);
-                                        console.log('Approved text file extracted data:', extractedData);
-                                        resolve(extractedData);
-                                      } else if (fileName.includes('senior') || fileName.includes('lead')) {
-                                        // Senior level approval case for text files
-                                        const simulatedContent = `CV
-Name: Senior Developer
-Email: senior@email.com
-Mobile number: 9876543215
-Skills: React, JavaScript, Node.js, Python, SQL, AWS, Docker, Kubernetes, Microservices
-Experience: 5 years`;
-                                        const extractedData = extractDataFromContent(simulatedContent);
-                                        console.log('Senior text file extracted data:', extractedData);
-                                        resolve(extractedData);
-                                      } else {
-                                        // For other text files, read actual content
-                                        const extractedData = extractDataFromContent(fileContent);
-                                        console.log('Text file extracted data:', extractedData); // Debug log
-                                        resolve(extractedData);
-                                      }
-                                    }
-                                  };
-                                  
-                                  // Simulate file reading (in real implementation, read actual content)
-                                  reader.readAsText(file);
-                                });
+                          if (!file) return;
+                          // Simulated analysis delay; cancelled if the user resets the chat
+                          schedule(() => {
+                            parseResumeFile(file).then((resume) => {
+                              const analysisMessage: Message = {
+                                id: makeId(),
+                                content: buildResumeAnalysis(file.name, resume),
+                                sender: 'bot',
+                                timestamp: new Date()
                               };
-                              
-                              // Parse the uploaded file
-                              parseResumeContent(file).then((extractedData) => {
-                                const mockResumeDataWithName = {
-                                  ...extractedData,
-                                  name: extractedData.name || extractedName
-                                };
-                              
-                                // Use imported job database
-                                const availableJobs = jobRoles;
-                                
-                                // Find matching jobs
-                                const matchingJobs = availableJobs.filter(job => {
-                                  // Extract minimum experience from job requirements
-                                  const minExpMatch = job.experience.match(/(\d+)/);
-                                  const minExperience = minExpMatch ? parseInt(minExpMatch[1]) : 0;
-                                  
-                                  const hasRequiredExperience = extractedData.experience >= minExperience;
-                                  const hasRequiredSkills = job.requirements.some(skill => 
-                                    extractedData.skills.some((resumeSkill: string) => 
-                                      resumeSkill.toLowerCase().includes(skill.toLowerCase()) ||
-                                      skill.toLowerCase().includes(resumeSkill.toLowerCase())
-                                    )
-                                  );
-                                  return hasRequiredExperience && hasRequiredSkills;
-                                });
-                                
-                                // Build analysis content with extracted data
-                                let analysisContent = `📄 **Resume Analysis Complete!**\n\n**File**: ${file.name}\n**Name**: ${mockResumeDataWithName.name}\n**Current Role**: ${extractedData.currentRole}\n**Experience**: ${extractedData.experience} years\n**Education**: ${extractedData.education}\n**Location**: ${extractedData.location}\n**Skills Detected**: ${extractedData.skills.join(", ")}`;
-                                
-                                // Add contact info if available
-                                if (extractedData.email) {
-                                  analysisContent += `\n**Email**: ${extractedData.email}`;
-                                }
-                                if (extractedData.phone) {
-                                  analysisContent += `\n**Phone**: ${extractedData.phone}`;
-                                }
-                                analysisContent += `\n\n`;
-                              
-                                // Check for minimum experience requirement (1 year)
-                                if (extractedData.experience < 1) {
-                                  analysisContent += `❌ **Application Rejected - Insufficient Experience**\n\n`;
-                                  analysisContent += `**Reason for Rejection:**\n`;
-                                  analysisContent += `• Minimum experience required: 1 year\n`;
-                                  analysisContent += `• Your current experience: ${extractedData.experience} years\n`;
-                                  analysisContent += `• Experience gap: ${(1 - extractedData.experience).toFixed(1)} years\n\n`;
-                                  analysisContent += `**Recommendations:**\n`;
-                                  analysisContent += `• Gain more professional experience in your field\n`;
-                                  analysisContent += `• Consider internships or entry-level positions\n`;
-                                  analysisContent += `• Build relevant skills through projects and certifications\n`;
-                                  analysisContent += `• Reapply when you have at least 1 year of experience\n\n`;
-                                  analysisContent += `**We encourage you to apply again in the future when you meet our experience requirements!**`;
-                                } else if (matchingJobs.length > 0) {
-                                  analysisContent += `🎉 **Congratulations! You are eligible for ${matchingJobs.length} position(s):**\n\n`;
-                                  matchingJobs.forEach((job, index) => {
-                                    analysisContent += `**${index + 1}. ${job.title}** (${job.department})\n`;
-                                    analysisContent += `• Experience Required: ${job.experience} ✅\n`;
-                                    analysisContent += `• Skills Match: ${job.requirements.join(", ")} ✅\n`;
-                                    analysisContent += `• Location: ${job.location}\n`;
-                                    analysisContent += `• Description: ${job.description}\n\n`;
-                                  });
-                                  analysisContent += `**Next Steps:**\n• Click "Proceed with Application" below\n• Our backend team will review your profile\n• You'll receive an email confirmation shortly\n• HR will contact you for next steps`;
-                                } else {
-                                  // Enhanced failure handling with specific recommendations
-                                  analysisContent += `😔 **We're sorry, but we couldn't find a perfect match for your current profile.**\n\n`;
-                                  analysisContent += `**Why this happened:**\n`;
-                                  analysisContent += `• Your experience (${extractedData.experience} years) may not meet our current requirements\n`;
-                                  analysisContent += `• Skills gap in areas we're actively hiring for\n`;
-                                  analysisContent += `• Current openings may not align with your background\n\n`;
-                                
-                                  analysisContent += `**📈 How to improve your chances:**\n`;
-                                  if (extractedData.experience < 1) {
-                                    analysisContent += `• Gain more hands-on experience through internships or projects\n`;
-                                  }
-                                  analysisContent += `• Consider upskilling in high-demand areas:\n`;
-                                  analysisContent += `  - Tech: React, JavaScript, Python, AWS\n`;
-                                  analysisContent += `  - Sales: CRM tools, communication skills\n`;
-                                  analysisContent += `  - Support: Customer service, problem-solving\n`;
-                                  analysisContent += `  - HR: Recruitment, employee relations\n\n`;
-                                  
-                                  analysisContent += `**🔄 Alternative Options:**\n`;
-                                  analysisContent += `• **Internship Programs**: Great for gaining experience\n`;
-                                  analysisContent += `• **Freelance Projects**: Build portfolio and skills\n`;
-                                  analysisContent += `• **Certification Courses**: Enhance your skill set\n`;
-                                  analysisContent += `• **Re-apply in 3-6 months**: After skill development\n\n`;
-                                  
-                                  analysisContent += `**💡 We encourage you to:**\n`;
-                                  analysisContent += `• Keep your profile updated on our careers page\n`;
-                                  analysisContent += `• Follow us on LinkedIn for new openings\n`;
-                                  analysisContent += `• Consider our referral program\n\n`;
-                                  
-                                  analysisContent += `**Thank you for your interest in Acme Corp!** We'll keep your profile in our database for future opportunities. 🚀`;
-                                }
-                              
-                                const analysisMessage = {
-                                  id: Date.now().toString(),
-                                  content: analysisContent,
-                                  sender: 'bot' as const,
-                                  timestamp: new Date()
-                                };
-                                setMessages(prev => [...prev, analysisMessage]);
-                                setShowResumeUpload(false);
-                              });
-                            }, 2000);
-                          }
+                              setMessages(prev => [...prev, analysisMessage]);
+                              setShowResumeUpload(false);
+                            });
+                          }, 2000);
                         }}
                       />
                       <label 
@@ -1621,7 +1239,7 @@ Experience: 5 years`;
                       </p>
                     </div>
 
-                    <button 
+                    <button
                       onClick={() => setShowTicketConfirmation(false)}
                       style={{
                         width: '100%',
@@ -1637,6 +1255,160 @@ Experience: 5 years`;
                     >
                       Understood!
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* AI Mode Settings Modal */}
+              {showSettings && (
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 10000
+                }}>
+                  <div style={{
+                    backgroundColor: 'white',
+                    borderRadius: '12px',
+                    padding: '24px',
+                    maxWidth: '480px',
+                    width: '90%',
+                    maxHeight: '85vh',
+                    overflow: 'auto'
+                  }}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
+                      <h2 style={{margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#1f2937'}}>⚡ AI Mode Settings</h2>
+                      <button
+                        onClick={() => setShowSettings(false)}
+                        style={{background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#6b7280'}}
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    <p style={{fontSize: '14px', color: '#6b7280', lineHeight: '1.5', margin: '0 0 16px'}}>
+                      Paste your own Claude API key to enable AI-powered answers grounded in the
+                      built-in knowledge base. Without a key, the assistant runs on the free
+                      rule-based engine.
+                    </p>
+
+                    <div style={{
+                      backgroundColor: '#f0f9ff',
+                      border: '1px solid #bfdbfe',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      marginBottom: '16px',
+                      fontSize: '13px',
+                      color: '#1e40af'
+                    }}>
+                      🔒 Your key is stored only in <strong>this browser</strong> (localStorage) and is
+                      sent only to the Claude API — never to any other server.
+                    </div>
+
+                    <label style={{display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px'}}>
+                      Claude API key
+                    </label>
+                    <input
+                      type="password"
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                      placeholder="sk-ant-..."
+                      autoComplete="off"
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        outline: 'none',
+                        marginBottom: '16px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+
+                    <label style={{display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px'}}>
+                      Model
+                    </label>
+                    <select
+                      value={modelInput}
+                      onChange={(e) => setModelInput(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        outline: 'none',
+                        marginBottom: '16px',
+                        backgroundColor: 'white',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      {AVAILABLE_MODELS.map((m) => (
+                        <option key={m.id} value={m.id}>{m.label}</option>
+                      ))}
+                    </select>
+
+                    <p style={{fontSize: '13px', color: aiEnabled ? '#059669' : '#6b7280', margin: '0 0 20px'}}>
+                      {aiEnabled ? '⚡ AI mode is currently ON' : '💤 AI mode is currently OFF — using the rule-based engine'}
+                    </p>
+
+                    <div style={{display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
+                      {aiEnabled && (
+                        <button
+                          onClick={handleClearApiKey}
+                          style={{
+                            padding: '10px 16px',
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            marginRight: 'auto'
+                          }}
+                        >
+                          Remove key
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setShowSettings(false)}
+                        style={{
+                          padding: '10px 16px',
+                          backgroundColor: '#6b7280',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '500'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSettingsSave}
+                        style={{
+                          padding: '10px 16px',
+                          backgroundColor: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '500'
+                        }}
+                      >
+                        Save
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

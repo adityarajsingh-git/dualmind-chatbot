@@ -8,7 +8,7 @@
 
 ---
 
-**DualMind** is a dual-mode chatbot concept originally built for a hackathon. It runs fully client-side with rule-based logic and mock data — no backend, no API keys, clone and run.
+**DualMind** is a dual-mode chatbot for small companies (30–100 employees). It runs fully client-side — no backend, no API keys required, clone and run. Optionally, plug in your own Claude API key to switch from the built-in rule engine to grounded AI answers (see [AI Mode](#-ai-mode-optional-bring-your-own-key)).
 
 ## ✨ Features
 
@@ -26,11 +26,30 @@
 - Floating chat widget, typing indicator, quick-action buttons
 - Clean, responsive, WhatsApp-style UI
 
+## ⚡ AI Mode (optional, bring your own key)
+
+By default DualMind answers from a **rule-based engine**: stopword removal, light stemming, a synonym map, and scored retrieval over a ~60-entry FAQ knowledge base. That works offline and costs nothing.
+
+With your own Claude API key, it upgrades to a **client-side RAG pipeline**:
+
+1. The retrieval engine pulls the top 5 relevant knowledge-base entries for your question
+2. Claude answers **only from those excerpts** (with source citations), so it can't invent policies
+3. Any failure — no key, bad key, rate limit, network — silently falls back to the rule engine
+
+To enable it: open the chat → ⚙️ settings → paste your [Claude API key](https://platform.claude.com/) and pick a model. The key is stored **only in your browser's localStorage** and sent **only to the Claude API** — this repo has no backend and no key ever appears in the code or bundle.
+
+```
+User question ──▶ FAQ retrieval (top-5) ──▶ Claude API (grounded prompt) ──▶ answer + source
+                        │                          │ (no key / any error)
+                        └──────────────────────────▶ rule-based engine ──▶ answer
+```
+
 ## 🧰 Tech Stack
 
 - **React 19** + **TypeScript**
 - **Vite 7** for dev/build
 - **React Router 7**
+- **Anthropic SDK** (`@anthropic-ai/sdk`) for optional AI mode
 - Plain CSS with custom utility classes (no UI framework)
 
 ## 🚀 Getting Started
@@ -47,20 +66,25 @@ npm run build      # production build
 
 ```
 src/
-├── App.tsx                    # main app: chat logic, modes, simulated responses
+├── App.tsx                    # main app: chat UI, modes, modals
 ├── components/
 │   └── LandingBackground.tsx  # landing hero
-├── data/mockData.ts           # job roles, FAQs, mock resume profiles
+├── utils/
+│   ├── responseEngine.ts      # scored FAQ retrieval + keyword intents (rule-based)
+│   ├── llmClient.ts           # optional AI mode: BYO-key Claude client + grounded prompt
+│   └── resumeParser.ts        # resume parsing, job matching, analysis output
+├── data/mockData.ts           # job catalog + generic FAQ knowledge base
 ├── types/index.ts             # shared TypeScript types
 └── assets/                    # logo & backgrounds
 ```
 
 ## 🗺️ Roadmap
 
-- Wire responses to a real LLM API (the response engine is currently rule-based)
+- ~~Wire responses to a real LLM API~~ ✅ done — BYO-key AI mode with grounded RAG
 - Real PDF parsing for resumes (pdf.js) instead of simulated extraction
 - Persist chat history
 - Split `App.tsx` into smaller components
+- Editable knowledge base (per-company policies) instead of a static file
 
 ## 📝 Notes
 
