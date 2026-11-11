@@ -548,7 +548,7 @@ Status: Issue not fully resolved - requires additional support`;
                   </div>
                 ) : (
                   /* Chat Messages Area */
-                  <div className="dm-scroll" style={{flex: 1, padding: '18px 16px', overflowY: 'auto', background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)'}}>
+                  <div className="dm-scroll" role="log" aria-live="polite" aria-label="Chat messages" style={{flex: 1, padding: '18px 16px', overflowY: 'auto', background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)'}}>
                     {messages.map((message) => (
                       <div key={message.id} className="dm-msg" style={{
                         display: 'flex',

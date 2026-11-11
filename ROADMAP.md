@@ -26,7 +26,7 @@ you discover as new unchecked entries.
 
 ## 🔨 Accessibility & polish
 - [ ] Keyboard support for the floating widget: Esc closes, focus moves into the chat on open and back to the launcher on close
-- [ ] `aria-live` region so screen readers announce new bot messages
+- [x] `aria-live` region so screen readers announce new bot messages
 - [ ] Audit the widget on narrow (≤ 360 px) screens: no horizontal overflow, input stays above the keyboard
 - [ ] Dark theme toggle persisted in `localStorage`, using the existing CSS variables
 
