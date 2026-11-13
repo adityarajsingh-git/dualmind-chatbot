@@ -75,6 +75,7 @@ function App() {
   const [modelInput, setModelInput] = useState(getModel());
   const [aiEnabled, setAiEnabled] = useState(isAIModeEnabled());
   const [isBotTyping, setIsBotTyping] = useState(false); // Typing indicator while AI mode responds
+  const launcherRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null); // Ref for input field focus
   const messagesEndRef = useRef<HTMLDivElement>(null); // Anchor for auto-scroll
   const pendingTimeouts = useRef<number[]>([]);
@@ -119,6 +120,23 @@ function App() {
       return () => clearTimeout(id);
     }
   }, [isChatbotOpen, currentMode]);
+
+  // Esc closes the widget (unless a modal is on top); focus returns to the launcher once it remounts
+  const anyModalOpen = showResumeUpload || showEmailConfirmation || showTicketConfirmation || showFeedbackPopup || showSettings;
+  useEffect(() => {
+    if (!isChatbotOpen || anyModalOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsChatbotOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isChatbotOpen, anyModalOpen]);
+
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !isChatbotOpen) launcherRef.current?.focus();
+    wasOpen.current = isChatbotOpen;
+  }, [isChatbotOpen]);
 
   const handleSendMessage = (textOverride?: string) => {
     const text = (textOverride ?? inputMessage).trim();
@@ -416,6 +434,7 @@ Status: Issue not fully resolved - requires additional support`;
                   </div>
 
                   <button
+                    ref={launcherRef}
                     className="dm-launcher dm-lift"
                     onClick={toggleChatbot}
                     aria-label="Open HR Buddy chat"

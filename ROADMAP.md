@@ -25,8 +25,9 @@ you discover as new unchecked entries.
 - [ ] Guard the resume parser against empty or oversized input and show an explicit error state
 
 ## 🔨 Accessibility & polish
-- [ ] Keyboard support for the floating widget: Esc closes, focus moves into the chat on open and back to the launcher on close
+- [x] Keyboard support for the floating widget: Esc closes (unless a modal is open), focus moves into the chat on open (already shipped) and back to the launcher on close
 - [x] `aria-live` region so screen readers announce new bot messages
+- [ ] Esc also closes the settings, resume-upload and feedback modals
 - [ ] Audit the widget on narrow (≤ 360 px) screens: no horizontal overflow, input stays above the keyboard
 - [ ] Dark theme toggle persisted in `localStorage`, using the existing CSS variables
 
