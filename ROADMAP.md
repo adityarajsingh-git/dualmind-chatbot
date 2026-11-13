@@ -13,10 +13,10 @@ you discover as new unchecked entries.
 
 ## 🔨 Chat experience
 - [x] Persist the conversation in `localStorage` so a page refresh keeps the chat and the active mode; "Clear chat" is the existing New Chat button (already shipped)
-- [ ] Show a subtle "answered by rule engine" badge when AI mode fell back, so the user knows which path answered
-- [ ] Make source citations in AI answers expandable: tap a citation to reveal the knowledge-base excerpt it came from
+- [x] Show which path answered when AI mode fell back (already shipped: fallback replies carry an inline "Answer from built-in knowledge base" note)
+- [ ] (needs the matched FAQ stored on the message first) Make source citations in AI answers expandable: tap a citation to reveal the knowledge-base excerpt it came from
 - [ ] "Was this helpful?" thumbs on each bot answer; a thumbs-down offers the ticket flow directly
-- [ ] Export the current conversation as a `.txt` download (useful when a ticket is raised)
+- [x] Export the current conversation as a `.txt` download (header download button)
 
 ## 🔨 Robustness
 - [ ] Add Vitest and unit tests for the retrieval engine: stopword removal, stemming, synonym expansion, scoring order

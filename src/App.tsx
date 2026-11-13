@@ -198,6 +198,19 @@ function App() {
     schedule(() => deliverBotResponse(responseContent), 1000);
   };
 
+  // Plain-text transcript download; quick-reply/satisfaction prompts are UI chrome, so they are left out
+  const exportConversation = () => {
+    const lines = messages
+      .filter(m => !m.isSatisfactionCheck)
+      .map(m => `[${m.timestamp.toLocaleString()}] ${m.sender === 'user' ? 'You' : 'HR Buddy'}: ${m.content.replace(/\*\*/g, '').replace(/^\*(Source:.*)\*$/gm, '$1')}`);
+    const url = URL.createObjectURL(new Blob([lines.join('\n\n') + '\n'], { type: 'text/plain;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hr-buddy-chat-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleModeChange = (mode: ChatMode) => {
     clearPendingTimeouts();
     setIsBotTyping(false);
@@ -470,6 +483,17 @@ Status: Issue not fully resolved - requires additional support`;
                                   <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                                     <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/>
                                     <path d="M3 3v5h5"/>
+                                  </svg>
+                                </button>
+                                <button
+                                  className="dm-lift"
+                                  onClick={exportConversation}
+                                  aria-label="Download conversation as a text file"
+                                  style={{padding: '7px 10px', backgroundColor: 'rgba(255,255,255,0.16)', border: 'none', borderRadius: '10px', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+                                  title="Download conversation (.txt)"
+                                >
+                                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                                    <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/>
                                   </svg>
                                 </button>
                               </>
