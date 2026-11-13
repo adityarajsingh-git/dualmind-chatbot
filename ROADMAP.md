@@ -12,7 +12,7 @@ you discover as new unchecked entries.
 - [x] Optional ticket persistence to MongoDB Atlas via `api/tickets.js` (Vercel serverless)
 
 ## 🔨 Chat experience
-- [ ] Persist the conversation in `localStorage` so a page refresh keeps the chat and the active mode; add a "Clear chat" action
+- [x] Persist the conversation in `localStorage` so a page refresh keeps the chat and the active mode; "Clear chat" is the existing New Chat button (already shipped)
 - [ ] Show a subtle "answered by rule engine" badge when AI mode fell back, so the user knows which path answered
 - [ ] Make source citations in AI answers expandable: tap a citation to reveal the knowledge-base excerpt it came from
 - [ ] "Was this helpful?" thumbs on each bot answer; a thumbs-down offers the ticket flow directly

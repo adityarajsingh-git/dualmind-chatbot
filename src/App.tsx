@@ -39,9 +39,26 @@ const SUGGESTIONS: Record<ChatMode, string[]> = {
   ]
 };
 
+const CHAT_KEY = 'dualmind.chat';
+
+// Restore the last conversation after a refresh; any bad/missing data means a fresh start
+function loadSavedChat(): { mode: ChatMode | null; messages: Message[] } {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CHAT_KEY) ?? 'null');
+    if ((saved?.mode === 'recruitment' || saved?.mode === 'employee-help') && Array.isArray(saved.messages)) {
+      return {
+        mode: saved.mode,
+        messages: saved.messages.map((m: Message) => ({ ...m, timestamp: new Date(m.timestamp) }))
+      };
+    }
+  } catch { /* corrupt or unavailable storage */ }
+  return { mode: null, messages: [] };
+}
+
 function App() {
-  const [currentMode, setCurrentMode] = useState<ChatMode | null>(null); // Start with no mode selected
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [saved] = useState(loadSavedChat);
+  const [currentMode, setCurrentMode] = useState<ChatMode | null>(saved.mode); // null = no mode selected yet
+  const [messages, setMessages] = useState<Message[]>(saved.messages);
   const [inputMessage, setInputMessage] = useState('');
   const [showResumeUpload, setShowResumeUpload] = useState(false);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
@@ -80,6 +97,14 @@ function App() {
   useEffect(() => clearPendingTimeouts, []);
 
   const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  // Persist the conversation; no mode (home / New Chat) means nothing to keep
+  useEffect(() => {
+    try {
+      if (currentMode) localStorage.setItem(CHAT_KEY, JSON.stringify({ mode: currentMode, messages }));
+      else localStorage.removeItem(CHAT_KEY);
+    } catch { /* storage full or blocked: chat still works, just not saved */ }
+  }, [currentMode, messages]);
 
   // Keep the newest message in view
   useEffect(() => {
