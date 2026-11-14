@@ -132,6 +132,23 @@ function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [isChatbotOpen, anyModalOpen]);
 
+  // Esc dismisses the settings, resume-upload and feedback modals (same as their Cancel/close buttons).
+  // The confirmation modals are left alone: they carry a result the user should acknowledge.
+  useEffect(() => {
+    if (!showSettings && !showResumeUpload && !showFeedbackPopup) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setShowSettings(false);
+      setShowResumeUpload(false);
+      if (showFeedbackPopup) {
+        setShowFeedbackPopup(false);
+        setFeedbackText('');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showSettings, showResumeUpload, showFeedbackPopup]);
+
   const wasOpen = useRef(false);
   useEffect(() => {
     if (wasOpen.current && !isChatbotOpen) launcherRef.current?.focus();

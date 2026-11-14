@@ -27,7 +27,7 @@ you discover as new unchecked entries.
 ## 🔨 Accessibility & polish
 - [x] Keyboard support for the floating widget: Esc closes (unless a modal is open), focus moves into the chat on open (already shipped) and back to the launcher on close
 - [x] `aria-live` region so screen readers announce new bot messages
-- [ ] Esc also closes the settings, resume-upload and feedback modals
+- [x] Esc also closes the settings, resume-upload and feedback modals (confirmation modals stay explicit-dismiss)
 - [ ] Audit the widget on narrow (≤ 360 px) screens: no horizontal overflow, input stays above the keyboard
 - [ ] Dark theme toggle persisted in `localStorage`, using the existing CSS variables
 
