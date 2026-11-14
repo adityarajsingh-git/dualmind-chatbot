@@ -21,7 +21,7 @@ you discover as new unchecked entries.
 ## 🔨 Robustness
 - [x] Add Vitest and unit tests for the retrieval engine: stopword removal, stemming, synonym expansion, scoring order (`npm test`)
 - [x] Validate `api/tickets.js` input (required ticketId, string types, truncated lengths) and return structured error JSON with HTTP 400
-- [ ] Handle provider rate-limit and quota errors with a short, friendly inline message instead of only falling back silently
+- [x] Handle provider rate-limit and quota errors with a short, friendly inline message (`fallbackNote` in `llmClient.ts`)
 - [ ] Guard the resume parser against empty or oversized input and show an explicit error state
 
 ## 🔨 Accessibility & polish

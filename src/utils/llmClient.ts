@@ -137,6 +137,17 @@ export interface LLMResult {
   detail?: string; // human-readable reason surfaced for debugging
 }
 
+/** Inline note appended to a rule-engine answer when the AI provider failed. */
+export function fallbackNote(result: LLMResult): string {
+  const why = result.detail ? ` — ${result.detail}` : '';
+  const kb = '(Answer from built-in knowledge base.)';
+  if (result.error === 'auth') return `\n\n⚠️ AI mode: key rejected${why}. Check Settings. ${kb}`;
+  if (result.error === 'rate_limit') {
+    return `\n\n⏳ AI mode: rate limit or free quota reached${why}. Wait a minute and try again, or switch model in Settings. ${kb}`;
+  }
+  return `\n\n💤 AI mode unavailable${why}. ${kb}`;
+}
+
 // ---------------------------------------------------------------------------
 // Claude (Anthropic)
 // ---------------------------------------------------------------------------

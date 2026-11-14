@@ -19,7 +19,8 @@ import {
   providerMeta,
   PROVIDERS,
   type Provider,
-  type LLMHistoryItem
+  type LLMHistoryItem,
+  fallbackNote
 } from './utils/llmClient';
 import './App.css';
 
@@ -216,12 +217,7 @@ function App() {
         setIsBotTyping(false);
         let content = result.content ?? generateBotResponse(userInput, mode);
         if (!result.content) {
-          const why = result.detail ? ` — ${result.detail}` : '';
-          if (result.error === 'auth') {
-            content += `\n\n⚠️ AI mode: key rejected${why}. Check Settings. (Answer from built-in knowledge base.)`;
-          } else {
-            content += `\n\n💤 AI mode unavailable${why}. (Answer from built-in knowledge base.)`;
-          }
+          content += fallbackNote(result);
         }
         deliverBotResponse(content);
       });
