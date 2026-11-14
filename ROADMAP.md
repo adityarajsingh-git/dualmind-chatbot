@@ -20,7 +20,7 @@ you discover as new unchecked entries.
 
 ## 🔨 Robustness
 - [ ] Add Vitest and unit tests for the retrieval engine: stopword removal, stemming, synonym expansion, scoring order
-- [ ] Validate `api/tickets.js` input (required fields, max lengths) and return structured error JSON
+- [x] Validate `api/tickets.js` input (required ticketId, string types, truncated lengths) and return structured error JSON with HTTP 400
 - [ ] Handle provider rate-limit and quota errors with a short, friendly inline message instead of only falling back silently
 - [ ] Guard the resume parser against empty or oversized input and show an explicit error state
 

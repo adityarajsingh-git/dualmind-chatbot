@@ -20,11 +20,27 @@ async function getDb() {
 
 const str = (v, max) => String(v ?? '').slice(0, max);
 
+// Returns the name of the first bad field, or null. Over-long values are
+// truncated by str() rather than rejected so a long feedback note is never lost.
+function validate(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return 'body';
+  if (typeof body.ticketId !== 'string' || !body.ticketId.trim()) return 'ticketId';
+  for (const f of ['mode', 'feedback', 'initialQuery']) {
+    if (body[f] != null && typeof body[f] !== 'string') return f;
+  }
+  return null;
+}
+
+// HTTP status for a saveTicket() result — shared by the Vercel fn and the dev middleware.
+export const statusFor = (r) => (r.ok ? 201 : r.skipped ? 200 : r.error === 'invalid_ticket' ? 400 : 500);
+
 /**
  * Insert one ticket. Returns { ok, ... }. Never throws — callers just relay it.
  * When MONGODB_URI is unset it's a no-op so the app still works offline.
  */
 export async function saveTicket(body) {
+  const invalid = validate(body);
+  if (invalid) return { ok: false, error: 'invalid_ticket', field: invalid };
   if (!process.env.MONGODB_URI) {
     return { ok: false, skipped: 'no_db_configured' };
   }

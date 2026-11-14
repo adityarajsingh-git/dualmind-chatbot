@@ -21,14 +21,15 @@ function ticketsDevApi(): Plugin {
         req.on('end', async () => {
           try {
             // @ts-expect-error - plain JS module (also used by the Vercel fn), no .d.ts
-            const { saveTicket } = await import('./api/_saveTicket.js')
+            const { saveTicket, statusFor } = await import('./api/_saveTicket.js')
             const result = await saveTicket(raw ? JSON.parse(raw) : {})
             res.setHeader('Content-Type', 'application/json')
-            res.statusCode = result.ok ? 201 : result.skipped ? 200 : 500
+            res.statusCode = statusFor(result)
             res.end(JSON.stringify(result))
-          } catch {
-            res.statusCode = 500
-            res.end(JSON.stringify({ ok: false, error: 'save_failed' }))
+          } catch (e) {
+            const bad = e instanceof SyntaxError
+            res.statusCode = bad ? 400 : 500
+            res.end(JSON.stringify(bad ? { ok: false, error: 'invalid_ticket', field: 'body' } : { ok: false, error: 'save_failed' }))
           }
         })
       })
