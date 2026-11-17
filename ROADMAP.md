@@ -22,7 +22,7 @@ you discover as new unchecked entries.
 - [x] Add Vitest and unit tests for the retrieval engine: stopword removal, stemming, synonym expansion, scoring order (`npm test`)
 - [x] Validate `api/tickets.js` input (required ticketId, string types, truncated lengths) and return structured error JSON with HTTP 400
 - [x] Handle provider rate-limit and quota errors with a short, friendly inline message (`fallbackNote` in `llmClient.ts`)
-- [ ] Guard the resume parser against empty or oversized input and show an explicit error state
+- [x] Guard the resume upload against empty, oversized (> 5 MB) and unsupported files with an inline error in the modal (`validateResumeFile`)
 
 ## 🔨 Accessibility & polish
 - [x] Keyboard support for the floating widget: Esc closes (unless a modal is open), focus moves into the chat on open (already shipped) and back to the launcher on close

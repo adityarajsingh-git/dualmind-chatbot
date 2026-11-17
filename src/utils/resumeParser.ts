@@ -75,6 +75,16 @@ function simulatedBinaryContent(fileName: string, fallbackName: string): string 
   return `Name: ${fallbackName}\nEmail: ${fallbackName.toLowerCase().replace(/\s+/g, '.')}@example.com\nMobile number: 9876500005\nSkills: React, JavaScript, Node.js, Python, SQL\nExperience: 2 years`;
 }
 
+export const MAX_RESUME_BYTES = 5 * 1024 * 1024;
+
+/** Returns a user-facing error for files we should not analyse, or null when the file is fine. */
+export function validateResumeFile(file: { name: string; size: number }): string | null {
+  if (!/\.(pdf|docx?)$/i.test(file.name)) return 'Unsupported file type. Please upload a PDF, DOC or DOCX file.';
+  if (file.size === 0) return 'This file is empty. Please choose a different resume.';
+  if (file.size > MAX_RESUME_BYTES) return 'This file is larger than 5 MB. Please upload a smaller resume.';
+  return null;
+}
+
 export function parseResumeFile(file: File): Promise<ExtractedResume> {
   const fallbackName = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ').trim() || 'Candidate';
   const fileName = file.name.toLowerCase();

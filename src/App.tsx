@@ -4,7 +4,7 @@ import LandingBackground from './components/LandingBackground';
 import Logo from './components/Logo';
 import type { ChatMode, Message } from './types';
 import { generateBotResponse } from './utils/responseEngine';
-import { parseResumeFile, buildResumeAnalysis } from './utils/resumeParser';
+import { parseResumeFile, buildResumeAnalysis, validateResumeFile } from './utils/resumeParser';
 import { saveTicket } from './utils/ticketApi';
 import {
   generateLLMResponse,
@@ -62,6 +62,7 @@ function App() {
   const [messages, setMessages] = useState<Message[]>(saved.messages);
   const [inputMessage, setInputMessage] = useState('');
   const [showResumeUpload, setShowResumeUpload] = useState(false);
+  const [resumeError, setResumeError] = useState('');
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [showTicketConfirmation, setShowTicketConfirmation] = useState(false);
   const [generatedTicketId, setGeneratedTicketId] = useState('');
@@ -280,6 +281,7 @@ Status: Issue not fully resolved - requires additional support`;
     if (mode === 'recruitment') {
       if (isSatisfied) {
         // Show CV upload option for recruitment
+        setResumeError('');
         setShowResumeUpload(true);
       } else {
         // Thank you message for recruitment
@@ -800,7 +802,7 @@ Status: Issue not fully resolved - requires additional support`;
                       <div style={{padding: '12px 16px 0', backgroundColor: 'white'}}>
                         <button
                           className="dm-lift"
-                          onClick={() => setShowResumeUpload(true)}
+                          onClick={() => { setResumeError(''); setShowResumeUpload(true); }}
                           style={{
                             width: '100%',
                             padding: '12px',
@@ -973,7 +975,11 @@ Status: Issue not fully resolved - requires additional support`;
                         id="resume-upload"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
+                          e.target.value = ''; // allow re-picking the same file after an error
                           if (!file) return;
+                          const error = validateResumeFile(file);
+                          setResumeError(error ?? '');
+                          if (error) return;
                           // Simulated analysis delay; cancelled if the user resets the chat
                           schedule(() => {
                             parseResumeFile(file).then((resume) => {
@@ -1004,6 +1010,9 @@ Status: Issue not fully resolved - requires additional support`;
                       >
                         Choose File
                       </label>
+                      {resumeError && (
+                        <p role="alert" style={{margin: '12px 0 0', fontSize: '14px', color: '#dc2626'}}>{resumeError}</p>
+                      )}
                     </div>
                     
                     <div style={{marginTop: '16px', fontSize: '14px', color: '#6b7280'}}>
