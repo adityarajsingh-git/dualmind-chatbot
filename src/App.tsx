@@ -885,7 +885,7 @@ Status: Issue not fully resolved - requires additional support`;
                           onFocus={(e) => { e.currentTarget.parentElement!.style.borderColor = '#818cf8'; }}
                           onBlur={(e) => { e.currentTarget.parentElement!.style.borderColor = '#e2e8f0'; }}
                           placeholder="Type your message…"
-                          style={{flex: 1, padding: '9px 8px', border: 'none', backgroundColor: 'transparent', outline: 'none', fontSize: '14px', color: '#1e293b'}}
+                          style={{flex: 1, minWidth: 0, padding: '9px 8px', border: 'none', backgroundColor: 'transparent', outline: 'none', fontSize: '14px', color: '#1e293b'}}
                         />
                         <button
                           className="dm-lift"
@@ -1044,6 +1044,8 @@ Status: Issue not fully resolved - requires additional support`;
                     padding: '32px',
                     maxWidth: '400px',
                     width: '90%',
+                    maxHeight: '90vh',
+                    overflowY: 'auto',
                     textAlign: 'center'
                   }}>
                     <div style={{
@@ -1350,6 +1352,8 @@ Status: Issue not fully resolved - requires additional support`;
                     padding: '32px',
                     maxWidth: '450px',
                     width: '90%',
+                    maxHeight: '90vh',
+                    overflowY: 'auto',
                     textAlign: 'center'
                   }}>
                     <div style={{

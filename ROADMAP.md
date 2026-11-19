@@ -28,7 +28,8 @@ you discover as new unchecked entries.
 - [x] Keyboard support for the floating widget: Esc closes (unless a modal is open), focus moves into the chat on open (already shipped) and back to the launcher on close
 - [x] `aria-live` region so screen readers announce new bot messages
 - [x] Esc also closes the settings, resume-upload and feedback modals (confirmation modals stay explicit-dismiss)
-- [ ] Audit the widget on narrow (≤ 360 px) screens: no horizontal overflow, input stays above the keyboard
+- [x] Audit the widget on narrow (≤ 360 px) screens: chat is already full-screen ≤ 640 px with `100dvh`; fixed the input row shrinking and two confirmation modals that could clip on short screens (code audit only)
+- [ ] Verify the widget on a real ≤ 360 px phone with the on-screen keyboard open `(owner)`
 - [ ] Dark theme toggle persisted in `localStorage`, using the existing CSS variables
 
 ## 🧑‍💻 Needs the owner (agent must skip)
