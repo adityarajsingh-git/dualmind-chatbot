@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { ChatMode } from '../types';
+import type { ChatMode, FAQ } from '../types';
 import { retrieveTopFAQs } from './responseEngine';
 
 // ---------------------------------------------------------------------------
@@ -102,8 +102,7 @@ const PERSONA: Record<ChatMode, string> = {
     'You are the Employee Help Desk assistant for a small company (30-100 employees). You help employees with leave, payroll, IT support, benefits, policies, and HR requests.'
 };
 
-function buildSystemPrompt(mode: ChatMode, userMessage: string): string {
-  const excerpts = retrieveTopFAQs(userMessage, mode, 5);
+function buildSystemPrompt(mode: ChatMode, excerpts: FAQ[]): string {
   const knowledge = excerpts.length
     ? excerpts
         .map(
@@ -135,6 +134,7 @@ export interface LLMResult {
   content: string | null;
   error?: 'auth' | 'rate_limit' | 'other';
   detail?: string; // human-readable reason surfaced for debugging
+  excerpts?: FAQ[]; // knowledge-base entries the answer was grounded in
 }
 
 /** Inline note appended to a rule-engine answer when the AI provider failed. */
@@ -268,10 +268,12 @@ export async function generateLLMResponse(
   const apiKey = getApiKey(provider);
   if (!apiKey) return { content: null, error: 'other' };
 
-  const system = buildSystemPrompt(mode, userMessage);
+  const excerpts = retrieveTopFAQs(userMessage, mode, 5);
+  const system = buildSystemPrompt(mode, excerpts);
   const model = getModel(provider);
 
-  return provider === 'gemini'
+  const result = await (provider === 'gemini'
     ? callGemini(apiKey, model, system, history, userMessage)
-    : callClaude(apiKey, model, system, history, userMessage);
+    : callClaude(apiKey, model, system, history, userMessage));
+  return result.content ? { ...result, excerpts } : result;
 }

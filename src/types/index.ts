@@ -7,6 +7,8 @@ export interface Message {
   timestamp: Date;
   isSatisfactionCheck?: boolean;
   mode?: ChatMode;
+  /** Knowledge-base entries an AI answer was grounded in (for expandable citations) */
+  citations?: FAQ[];
 }
 
 export interface JobRole {

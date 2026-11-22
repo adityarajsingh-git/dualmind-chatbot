@@ -14,7 +14,7 @@ you discover as new unchecked entries.
 ## 🔨 Chat experience
 - [x] Persist the conversation in `localStorage` so a page refresh keeps the chat and the active mode; "Clear chat" is the existing New Chat button (already shipped)
 - [x] Show which path answered when AI mode fell back (already shipped: fallback replies carry an inline "Answer from built-in knowledge base" note)
-- [ ] (needs the matched FAQ stored on the message first) Make source citations in AI answers expandable: tap a citation to reveal the knowledge-base excerpt it came from
+- [x] Make source citations in AI answers expandable: tap a citation to reveal the knowledge-base excerpt it came from (AI answers only; rule-engine answers keep the plain source line)
 - [ ] "Was this helpful?" thumbs on each bot answer; a thumbs-down offers the ticket flow directly
 - [x] Export the current conversation as a `.txt` download (header download button)
 

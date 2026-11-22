@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingBackground from './components/LandingBackground';
 import Logo from './components/Logo';
-import type { ChatMode, Message } from './types';
+import type { ChatMode, FAQ, Message } from './types';
 import { generateBotResponse } from './utils/responseEngine';
 import { parseResumeFile, buildResumeAnalysis, validateResumeFile } from './utils/resumeParser';
 import { saveTicket } from './utils/ticketApi';
@@ -60,6 +60,7 @@ function App() {
   const [saved] = useState(loadSavedChat);
   const [currentMode, setCurrentMode] = useState<ChatMode | null>(saved.mode); // null = no mode selected yet
   const [messages, setMessages] = useState<Message[]>(saved.messages);
+  const [expandedCitations, setExpandedCitations] = useState<Set<string>>(new Set());
   const [inputMessage, setInputMessage] = useState('');
   const [showResumeUpload, setShowResumeUpload] = useState(false);
   const [resumeError, setResumeError] = useState('');
@@ -174,12 +175,13 @@ function App() {
     // Focus input after sending message
     schedule(() => inputRef.current?.focus(), 100);
 
-    const deliverBotResponse = (responseContent: string) => {
+    const deliverBotResponse = (responseContent: string, citations?: FAQ[]) => {
       const botResponse: Message = {
         id: makeId(),
         content: responseContent,
         sender: 'bot',
-        timestamp: new Date()
+        timestamp: new Date(),
+        citations
       };
       setMessages(prev => [...prev, botResponse]);
 
@@ -220,7 +222,7 @@ function App() {
         if (!result.content) {
           content += fallbackNote(result);
         }
-        deliverBotResponse(content);
+        deliverBotResponse(content, result.excerpts);
       });
       return;
     }
@@ -656,6 +658,33 @@ Status: Issue not fully resolved - requires additional support`;
                           <div style={{margin: 0, whiteSpace: 'pre-line'}}>
                             {message.content.split('\n').map((line: string, index: number) => {
                               if (line.startsWith('*Source:')) {
+                                const name = line.replace(/\*/g, '').replace('Source:', '').trim();
+                                const cited = message.citations?.filter(f => f.source === name);
+                                if (cited?.length) {
+                                  const open = expandedCitations.has(message.id);
+                                  return (
+                                    <div key={index} style={{ marginTop: '8px' }}>
+                                      <button
+                                        type="button"
+                                        aria-expanded={open}
+                                        onClick={() => setExpandedCitations(prev => {
+                                          const next = new Set(prev);
+                                          if (!next.delete(message.id)) next.add(message.id);
+                                          return next;
+                                        })}
+                                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '11px', color: '#4f46e5', fontStyle: 'italic', textDecoration: 'underline' }}
+                                      >
+                                        Source: {name} {open ? '▴' : '▾'}
+                                      </button>
+                                      {open && cited.map((f, i) => (
+                                        <div key={i} style={{ marginTop: '6px', padding: '8px 10px', background: '#f8fafc', borderLeft: '3px solid #c7d2fe', borderRadius: '6px', fontSize: '12px', color: '#475569' }}>
+                                          <strong>{f.question}</strong>
+                                          <div>{f.answer}</div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  );
+                                }
                                 return (
                                   <div key={index} style={{
                                     fontSize: '11px',
