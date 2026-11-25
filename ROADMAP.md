@@ -30,7 +30,8 @@ you discover as new unchecked entries.
 - [x] Esc also closes the settings, resume-upload and feedback modals (confirmation modals stay explicit-dismiss)
 - [x] Audit the widget on narrow (≤ 360 px) screens: chat is already full-screen ≤ 640 px with `100dvh`; fixed the input row shrinking and two confirmation modals that could clip on short screens (code audit only)
 - [ ] Verify the widget on a real ≤ 360 px phone with the on-screen keyboard open `(owner)`
-- [ ] Dark theme toggle persisted in `localStorage`, using the existing CSS variables
+- [x] Dark theme toggle in the chat header, persisted in `localStorage` (`dualmind.theme`); implemented as a CSS filter on the chat window, modals stay light
+- [ ] Dark theme for modals and exact token-based colours (move inline colours to `--dm-*` variables)
 
 ## 🧑‍💻 Needs the owner (agent must skip)
 - [ ] Deploy to Vercel and connect MongoDB Atlas for tickets
