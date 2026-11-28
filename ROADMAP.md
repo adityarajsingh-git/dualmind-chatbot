@@ -15,7 +15,7 @@ you discover as new unchecked entries.
 - [x] Persist the conversation in `localStorage` so a page refresh keeps the chat and the active mode; "Clear chat" is the existing New Chat button (already shipped)
 - [x] Show which path answered when AI mode fell back (already shipped: fallback replies carry an inline "Answer from built-in knowledge base" note)
 - [x] Make source citations in AI answers expandable: tap a citation to reveal the knowledge-base excerpt it came from (AI answers only; rule-engine answers keep the plain source line)
-- [ ] "Was this helpful?" thumbs on each bot answer; a thumbs-down offers the ticket flow directly
+- [x] "Was this helpful?" thumbs on each bot answer (already shipped: the satisfaction check after every answer offers the same yes/no, and "no" opens the ticket/feedback flow)
 - [x] Export the current conversation as a `.txt` download (header download button)
 
 ## 🔨 Robustness
@@ -31,7 +31,8 @@ you discover as new unchecked entries.
 - [x] Audit the widget on narrow (≤ 360 px) screens: chat is already full-screen ≤ 640 px with `100dvh`; fixed the input row shrinking and two confirmation modals that could clip on short screens (code audit only)
 - [ ] Verify the widget on a real ≤ 360 px phone with the on-screen keyboard open `(owner)`
 - [x] Dark theme toggle in the chat header, persisted in `localStorage` (`dualmind.theme`); implemented as a CSS filter on the chat window, modals stay light
-- [ ] Dark theme for modals and exact token-based colours (move inline colours to `--dm-*` variables)
+- [x] Dark theme for modals: the card of each modal gets the same invert filter when dark is on (backdrop stays dim)
+- [ ] Exact token-based dark colours (move inline colours to `--dm-*` variables)
 
 ## 🧑‍💻 Needs the owner (agent must skip)
 - [ ] Deploy to Vercel and connect MongoDB Atlas for tickets

@@ -712,6 +712,7 @@ body {
 /* Dark theme: invert the light UI, then invert brand-coloured parts back.
    ponytail: filter-based, not token-based; move to --dm-* variables if exact colours matter. */
 .dm-dark { filter: invert(1) hue-rotate(180deg); }
+.dm-dark-modal > div { filter: invert(1) hue-rotate(180deg); } /* card only, so the backdrop stays dim */
 .dm-dark .dm-keep, .dm-dark img, .dm-dark svg.dm-keep { filter: invert(1) hue-rotate(180deg); }
 
 /* Chat window entrance */

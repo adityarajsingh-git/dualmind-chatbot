@@ -972,7 +972,7 @@ Status: Issue not fully resolved - requires additional support`;
 
               {/* Resume Upload Modal */}
               {showResumeUpload && (
-                <div style={{
+                <div className={dark ? 'dm-dark-modal' : undefined} style={{
                   position: 'fixed',
                   top: 0,
                   left: 0,
@@ -1078,7 +1078,7 @@ Status: Issue not fully resolved - requires additional support`;
 
               {/* Email Confirmation Popup */}
               {showEmailConfirmation && (
-                <div style={{
+                <div className={dark ? 'dm-dark-modal' : undefined} style={{
                   position: 'fixed',
                   top: 0,
                   left: 0,
@@ -1161,7 +1161,7 @@ Status: Issue not fully resolved - requires additional support`;
 
               {/* Feedback Popup */}
               {showFeedbackPopup && (
-                <div style={{
+                <div className={dark ? 'dm-dark-modal' : undefined} style={{
                   position: 'fixed',
                   top: 0,
                   left: 0,
@@ -1386,7 +1386,7 @@ Status: Issue not fully resolved - requires additional support`;
 
               {/* Ticket Confirmation Popup */}
               {showTicketConfirmation && (
-                <div style={{
+                <div className={dark ? 'dm-dark-modal' : undefined} style={{
                   position: 'fixed',
                   top: 0,
                   left: 0,
@@ -1482,7 +1482,7 @@ Status: Issue not fully resolved - requires additional support`;
 
               {/* AI Mode Settings Modal */}
               {showSettings && (
-                <div style={{
+                <div className={dark ? 'dm-dark-modal' : undefined} style={{
                   position: 'fixed',
                   top: 0,
                   left: 0,
